@@ -11,7 +11,7 @@ from shapely.geometry import Polygon
 import geopandas as gp
 import numpy as np
 import warnings
-from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QLineEdit, QPushButton, QFileDialog, QMessageBox, QTabWidget, QProgressBar
+from PyQt5.QtWidgets import QDialog,QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QLineEdit, QPushButton, QFileDialog, QMessageBox, QTabWidget, QProgressBar,  QPlainTextEdit
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from fastkml import kml
@@ -19,7 +19,8 @@ import platform
 import webbrowser
 warnings.filterwarnings("ignore")
 import subprocess
-
+import glob
+import re
 from PyQt5.QtCore import Qt, QCoreApplication
 # Définir les attributs d'application nécessaires avant la création de QApplication
 QCoreApplication.setAttribute(Qt.AA_ShareOpenGLContexts)
@@ -42,6 +43,7 @@ def create_main_window():
 
     central_widget = QWidget()
     layout = QVBoxLayout()
+    central_widget.setLayout(layout)
     main_window.setCentralWidget(central_widget)
 
     tab_widget = QTabWidget()
@@ -64,8 +66,8 @@ def create_main_window():
     utilities_layout.addWidget(open_gedi_website_button)
 
     quit_button = QPushButton("Close")
-    quit_button.clicked.connect(QApplication.instance().quit)  # Quit the application
-    quit_button.setProperty('class', 'quit-button')  # Set the custom class
+    quit_button.clicked.connect(QApplication.instance().quit)
+    quit_button.setProperty('class', 'quit-button')
     utilities_layout.addWidget(quit_button)
     tab_widget.addTab(utilities_tab, "DOWNLOAD")
 
@@ -77,15 +79,18 @@ def create_main_window():
     unzip_label = QLabel("Drag and drop zip files here to extract .h5 files:")
     unzip_label.setAlignment(Qt.AlignCenter)
     unzip_label.setFont(QFont('Arial', 12))
-
+    quit_button = QPushButton("Close")
+    quit_button.clicked.connect(QApplication.instance().quit)
+    quit_button.setProperty('class', 'quit-button')
+    
     unzip_layout.addWidget(unzip_label)
     
     progress_bar = QProgressBar()
-    progress_bar.setRange(0, 100)  # Range of progress bar
-    progress_bar.setValue(0)  # Initial value
+    progress_bar.setRange(0, 100)
+    progress_bar.setValue(0)
     progress_bar.setAlignment(Qt.AlignCenter)
-
     unzip_layout.addWidget(progress_bar)
+    unzip_layout.addWidget(quit_button)
     
     def drag_enter_event(event):
         if event.mimeData().hasUrls():
@@ -105,12 +110,6 @@ def create_main_window():
     central_widget.setAcceptDrops(True)
 
     tab_widget.addTab(unzip_tab, "Drag and Drop Unzipper")
-
-    # Add Quit button to the unzip_tab
-    quit_button = QPushButton("Close")
-    quit_button.clicked.connect(QApplication.instance().quit)  # Quit the application
-    quit_button.setProperty('class', 'quit-button')  # Set the custom class
-    unzip_layout.addWidget(quit_button)
 
     # Tab for GEDI Data Processor
     gedi_tab = QWidget()
@@ -132,7 +131,6 @@ def create_main_window():
     roiLineEdit = QLineEdit()
     roiLineEdit.setReadOnly(True)
 
-    # outputFileLabel = QLabel("Enter the output HDF5 file name:")
     outputFileLineEdit = "out.h5"
 
     beamsLabel = QLabel("Enter specific beams to be included in the output GeoJSON (optional, default is all beams):")
@@ -141,8 +139,40 @@ def create_main_window():
     sdsLabel = QLabel("Enter specific science datasets (SDS) to include in the output GeoJSON (optional):")
     sdsLineEdit = QLineEdit()
 
+    
     processButton = QPushButton("Process Files")
     processButton.clicked.connect(lambda: process_files(inDirLineEdit, roiLineEdit, outputFileLineEdit, beamsLineEdit, sdsLineEdit))
+    processButton.setProperty('class', 'proc-button')
+    
+
+            
+    outDirLabel = QLabel("Enter the local directory containing CSV files to be merged:")
+    outDirLineEdit = QLineEdit()
+    browseoutButton = QPushButton("Browse")
+    browseoutButton.clicked.connect(lambda: browse_directory(outDirLineEdit))
+    
+    mergeButton = QPushButton("Merge CSV")
+    mergeButton.clicked.connect(lambda: merge_csv_on_id(outDirLineEdit.text()))
+    mergeButton.setProperty('class', 'merge-button')
+    
+    csvLabel = QLabel("Select CSV file to be filtered:")
+    csvLineEdit = QLineEdit()
+    browseCSVButton = QPushButton("Browse")
+    browseCSVButton.clicked.connect(lambda: browse_csv(csvLineEdit))
+    
+    filterButton = QPushButton("Filter CSV")
+    filterButton.clicked.connect(lambda: filtre(csvLineEdit.text()))
+    filterButton.setProperty('class', 'filter-button')
+    
+    
+    csvLabel2 = QLabel("Select CSV file to be split according to algorithms:")
+    csvLineEdit2 = QLineEdit()
+    browseCSVButton2 = QPushButton("Browse")
+    browseCSVButton2.clicked.connect(lambda: browse_csv(csvLineEdit2))
+    
+    splitButton = QPushButton("Split CSV")
+    splitButton.clicked.connect(lambda: split_csv_on_algo(csvLineEdit2.text()))
+    splitButton.setProperty('class', 'split-button')
     
     gedi_layout.addWidget(inDirLabel)
     gedi_layout.addWidget(inDirLineEdit)
@@ -150,19 +180,25 @@ def create_main_window():
     gedi_layout.addWidget(kmlLabel)
     gedi_layout.addWidget(kmlLineEdit)
     gedi_layout.addWidget(browseKMLButton)
-    gedi_layout.addWidget(roiLabel)
-    gedi_layout.addWidget(roiLineEdit)
-    #gedi_layout.addWidget(outputFileLabel)
-    #gedi_layout.addWidget(outputFileLineEdit)
-    gedi_layout.addWidget(beamsLabel)
-    gedi_layout.addWidget(beamsLineEdit)
     gedi_layout.addWidget(sdsLabel)
     gedi_layout.addWidget(sdsLineEdit)
     gedi_layout.addWidget(processButton)
+    gedi_layout.addWidget(outDirLabel)
+    gedi_layout.addWidget(outDirLineEdit)
+    gedi_layout.addWidget(browseoutButton)
+    gedi_layout.addWidget(mergeButton)
+    gedi_layout.addWidget(csvLabel)
+    gedi_layout.addWidget(csvLineEdit)
+    gedi_layout.addWidget(browseCSVButton)
+    gedi_layout.addWidget(filterButton)
+    gedi_layout.addWidget(csvLabel2)
+    gedi_layout.addWidget(csvLineEdit2)
+    gedi_layout.addWidget(browseCSVButton2)
+    gedi_layout.addWidget(splitButton)
     
     quit_button = QPushButton("Close")
-    quit_button.clicked.connect(QApplication.instance().quit)  # Quit the application
-    quit_button.setProperty('class', 'quit-button')  # Set the custom class
+    quit_button.clicked.connect(QApplication.instance().quit)
+    quit_button.setProperty('class', 'quit-button')
     gedi_layout.addWidget(quit_button)
     tab_widget.addTab(gedi_tab, "GEDI Data Processor")
     
@@ -171,55 +207,53 @@ def create_main_window():
     MAP_layout = QVBoxLayout()
     MAP_tab.setLayout(MAP_layout)
     map_button = QPushButton("Open Map")
-    map_button.clicked.connect(open_map)  # Replace open_map_function with your actual function
+    map_button.clicked.connect(open_map)
     MAP_layout.addWidget(map_button)
     tab_widget.addTab(MAP_tab, "MAP")
-    layout.addWidget(tab_widget)
-    layout.addStretch()
     quit_button = QPushButton("Close")
-    quit_button.clicked.connect(QApplication.instance().quit)  # Quit the application
-    quit_button.setProperty('class', 'quit-button')  # Set the custom class
+    quit_button.clicked.connect(QApplication.instance().quit)
+    quit_button.setProperty('class', 'quit-button')
     MAP_layout.addWidget(quit_button)
-    central_widget.setLayout(layout)
+    layout.addWidget(tab_widget)
 
     # Apply stylesheet
     main_window.setStyleSheet("""
     QWidget {
         background: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1,
-            stop: 0 #3a6186, stop: 1 #89253e);
+            stop: 0 #2c3e50, stop: 1 #34495e);
         color: #ecf0f1;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
-
+    
     QProgressBar {
-        border: 1px solid #34495e;
+        border: 1px solid #7f8c8d;
         border-radius: 5px;
         background-color: #2c3e50;
         text-align: center;
         color: #ecf0f1;
     }
     QProgressBar::chunk {
-        background-color: #1abc9c;
+        background-color: #3498db;
         width: 5px;
         margin: 0.5px;
     }
-
+    
     QLabel {
         font-size: 14px;
         color: #ecf0f1;
     }
-
+    
     QLineEdit {
         padding: 8px;
         font-size: 14px;
         border-radius: 5px;
-        border: 1px solid #1abc9c;
-        background-color: #34495e;
+        border: 1px solid #3498db;
+        background-color: #2c3e50;
         color: #ecf0f1;
     }
-
+    
     QPushButton {
-        background-color: #3498db;
+        background-color: #2980b9;
         color: white;
         font-weight: bold;
         border: none;
@@ -229,38 +263,92 @@ def create_main_window():
         transition: background-color 0.3s ease;
     }
     QPushButton:hover {
-        background-color: #2980b9;
-    }
-    QPushButton:pressed {
         background-color: #1f618d;
     }
+    QPushButton:pressed {
+        background-color: #1a5276;
+    }
+    
+    .proc-button,.merge-button, .split-button, .filter-button {
+        background-color: #08c993;
+    }
+    .proc-button:hover,.merge-button:hover, .split-button:hover, .filter-button:hover {
+        background-color: #0aa378;
+    }
+    .proc-button:pressed,.merge-button:pressed, .split-button:pressed ,.filter-button:pressed{
+        background-color: #0aa378;
+    }
+
     .quit-button {
         background-color: #e74c3c;
     }
     .quit-button:hover {
         background-color: #c0392b;
     }
-
+    
     QTabBar::tab {
-        background-color: #2c3e50;
+        background-color: #34495e;
         color: #bdc3c7;
         padding: 10px;
-        border: 1px solid #34495e;
+        border: 1px solid #7f8c8d;
         border-bottom: none;
     }
     QTabBar::tab:selected {
-        background-color: #34495e;
+        background-color: #2c3e50;
         color: #ecf0f1;
     }
     QTabBar::tab:hover {
-        background-color: #3a6186;
+        background-color: #3b4b5b;
     }
     """)
 
-    # Store references to line edits
     line_edit_refs['roi'] = roiLineEdit
 
     return main_window
+
+#%% DOWNLOAD DATA 
+def open_pdf_file():
+    file_dialog = QFileDialog()
+    file_path, _ = file_dialog.getOpenFileName(None, "Open PDF File", "", "PDF Files (*.pdf)")
+    
+    if file_path:
+        # Assuming manual.pdf is the PDF you want to open in a web browser
+        manual_path = os.path.abspath("manual.pdf")
+        webbrowser.open_new_tab(f"file://{manual_path}")
+
+            
+def open_google_earth():
+    
+    if platform.system() == "Windows":
+        os.system('start "" "C:\\Program Files\\Google\\Google Earth Pro\\client\\googleearth.exe"')
+    elif platform.system() == "Darwin":  # macOS
+        os.system('open -a "Google Earth Pro"')
+    else:  # Assuming Linux
+        os.system('google-earth-pro')
+
+def open_gedi_website():
+    webbrowser.open('https://search.earthdata.nasa.gov/search')
+    
+#%% EXTRACT ZIP
+def extract_h5_from_zip(file_path, label, progress_bar):
+    parent_directory = os.path.dirname(file_path)
+    input_folder = os.path.join(parent_directory, 'input')
+    os.makedirs(input_folder, exist_ok=True)
+
+    with zipfile.ZipFile(file_path, 'r') as zip_ref:
+        file_count = len([member for member in zip_ref.namelist() if member.lower().endswith('.h5')])
+        current_file = 0
+        for member in zip_ref.namelist():
+            if member.lower().endswith('.h5'):
+                current_file += 1
+                filename = os.path.basename(member)
+                target_path = os.path.join(input_folder, filename)
+                with zip_ref.open(member) as source, open(target_path, 'wb') as target:
+                    shutil.copyfileobj(source, target)
+                label.setText(f"All .h5 files extracted and stored in: {input_folder}")
+                progress_bar.setValue(int(current_file / file_count * 100))  # Update progress bar
+    progress_bar.setValue(100)  # Ensure progress bar is at 100% after completion
+
 
 #%% PROCESSING
 def browse_directory(inDirLineEdit):
@@ -273,6 +361,12 @@ def browse_kml(kmlLineEdit):
     if file_name:
         kmlLineEdit.setText(file_name)
         extract_roi_from_kml(file_name, line_edit_refs['roi'])
+        
+def browse_csv(csvLineEdit):
+    file_name, _ = QFileDialog.getOpenFileName(None, "Select CSV File", "", "CSV files (*.csv)")
+    if file_name:
+        csvLineEdit.setText(file_name)
+        
 
 def extract_roi_from_kml(kml_file, roiLineEdit):
     with open(kml_file, 'rb') as f:  # Open the file in binary mode
@@ -304,11 +398,9 @@ def extract_roi_from_kml(kml_file, roiLineEdit):
         roiLineEdit.setText(roi)
 
 #%% GENERATE OUTPUT.H5
-
-
-    
-    
 def process_files(inDirLineEdit, roiLineEdit, outputFileLineEdit, beamsLineEdit, sdsLineEdit):
+
+
     global inDir
     inDir = inDirLineEdit.text()
     roi_input = roiLineEdit.text()
@@ -333,7 +425,7 @@ def process_files(inDirLineEdit, roiLineEdit, outputFileLineEdit, beamsLineEdit,
 
     finalClip = gp.GeoDataFrame(index=[0], geometry=[ROI], crs='EPSG:4326')
   
-    print(finalClip)
+    # print(finalClip)
 
     if inDir[-1] != os.sep:
         inDir = inDir.strip("'").strip('"') + os.sep
@@ -363,12 +455,35 @@ def process_files(inDirLineEdit, roiLineEdit, outputFileLineEdit, beamsLineEdit,
         os.makedirs(outDir)
 
     gediFiles = [o for o in os.listdir() if o.endswith('.h5') and 'GEDI' in o]
+    
+    # Création de la boîte de dialogue avec une barre de chargement
+    progress_dialog = QDialog()
+    progress_dialog.setWindowTitle("Processing Files")
+    layout = QVBoxLayout(progress_dialog)
+    progress_bar = QProgressBar()
+    layout.addWidget(progress_bar)
+    progress_dialog.setLayout(layout)
+    progress_dialog.show()
+    # Traitement des fichiers avec une barre de chargement
+    total_files = len(gediFiles)
+    progress_bar.setMaximum(total_files)
+    for i, file in enumerate(gediFiles):
+        # Votre fonction de fusion des données ici
+        merged_data = merge_data([file], beams=beamSubset, sds=layerSubset)
+        
+        # Mise à jour de la barre de chargement
+        progress_bar.setValue(i + 1)
+        QApplication.processEvents()  # Assurez-vous que la barre de chargement se met à jour
+
 
     merged_data = merge_data(gediFiles, beams=beamSubset, sds=layerSubset)
 
     output_hdf5_file = os.path.join(parentDir, output_file)
     write_to_hdf5(output_hdf5_file, merged_data)
     csv()
+    progress_dialog.close()
+
+
     QMessageBox.information(None, "Process Complete", f"Merged HDF5 file created at: {output_hdf5_file}")
 
 def merge_data(files, beams=None, sds=None):
@@ -398,8 +513,8 @@ def merge_data(files, beams=None, sds=None):
 
     for file in files:
 
-        print(f"Processing file: {file}")
-        print_h5_structure(file)
+        # print(f"Processing file: {file}")
+        # print_h5_structure(file)
         file_data = process_file(file, beams, sds)
 
         for key, values in file_data.items():
@@ -409,10 +524,10 @@ def merge_data(files, beams=None, sds=None):
                 merged_data[key].extend(values)
         lent = len(merged_data['rxwaveform'])        
         for key, values in file_data.items():
-            if key == 'IDS' or key =='SNR' or key =='VA' or key =='longitude_bin0' or key =='latitude_bin0' or key =='longitude_instrument' or key =='latitude_instrument' or key =='altitude_instrument' or key =='shot_number' or key =='lat_lowestmode' or key =='lon_lowestmode' or key =='elev_lowestmode' or key =='rh_a1' or key =='mean' or key =='stddev' or key =='rx_modeamps':
-                if key not in merged_data:
-                    merged_data[key] = []
-                merged_data[key].extend(values[:])
+           
+            if key not in merged_data:
+                merged_data[key] = []
+            merged_data[key].extend(values[:])
             
         merged_data['shot_number'] = merged_data['shot_number'][:lent]     
         merged_data['IDS'] = merged_data['IDS'][:lent] 
@@ -464,7 +579,7 @@ def process_file(file_path, beams=None, sds=None):
             if beams and beam not in beams:
                 continue
             if 'geolocation' not in f[beam]:
-                print(f"Skipping {beam} in {file_path}: 'geolocation' group not found.")
+                # print(f"Skipping {beam} in {file_path}: 'geolocation' group not found.")
                 continue
             shot_numbers = f[beam]['geolocation']['shot_number'][:]
             ids = create_ids(shot_numbers)
@@ -538,16 +653,16 @@ def process_file(file_path, beams=None, sds=None):
                 for dataset in sds:
                     if dataset in f[beam]:
                         data[dataset].extend(f[beam][dataset][:])
-                    else:
-                        print(f"Dataset {dataset} not found in {beam} of {file_path}")
+                    # else:
+                    #     # print(f"Dataset {dataset} not found in {beam} of {file_path}")
             if 'rxwaveform' in f[beam]:
                 rxwaveform = f[beam]["rxwaveform"][:]
                 rx_sample_count = f[beam]["rx_sample_count"][:]
                 rx_split_index = f[beam]["rx_sample_start_index"][:]-1
                 waveforms = [rxwaveform[x:x+i] for x, i in zip(rx_split_index, rx_sample_count)]
                 data["rxwaveform"].extend(waveforms)
-            else:
-                print(f"rxwaveform dataset not found in {beam} of {file_path}")
+            # else:
+            #     print(f"rxwaveform dataset not found in {beam} of {file_path}")
                
             
                
@@ -557,7 +672,7 @@ def process_file(file_path, beams=None, sds=None):
 def print_h5_structure(file_path):
     def print_structure(name, obj):
         indent = '  ' * name.count('/')
-        print(f"{indent}{name}")
+        # print(f"{indent}{name}")
     with h5py.File(file_path, 'r') as f:
         f.visititems(print_structure)
 
@@ -565,7 +680,7 @@ def write_to_hdf5(output_file, data):
     with h5py.File(output_file, 'w') as f:
         df_group = f.create_group('df')
         for key, values in data.items():
-            print(f"Writing dataset {key} with {len(values)} items.")
+            # print(f"Writing dataset {key} with {len(values)} items.")
             if key == 'rxwaveform':
                 waveform_strings = [','.join(str(value) for value in waveform) for waveform in values]
                 dt = h5py.special_dtype(vlen=str)
@@ -609,6 +724,10 @@ def VA(lon1, lat1, lon2, lat2, altitude):
 
 #%% GENERATE CSV    
 def csv():
+    
+    
+    
+
     # --------------------DEFINE PRESET BAND/LAYER SUBSETS ------------------------------------------ #
     # Default layers to be subset and exported, see README for information on how to add additional layers
     l1bSubset = ['/geolocation/latitude_bin0', '/geolocation/longitude_bin0', '/channel', '/shot_number',
@@ -616,17 +735,60 @@ def csv():
                  '/geolocation/longitude_instrument','/geolocation/degrade', '/geolocation/delta_time', '/geolocation/digital_elevation_model',
                  '/geolocation/solar_elevation',  '/geolocation/local_beam_elevation',  '/noise_mean_corrected',
                  '/geolocation/elevation_bin0', '/geolocation/elevation_lastbin', '/geolocation/surface_type', '/geolocation/digital_elevation_model_srtm']
-    l2aSubset = ['/lat_lowestmode', '/lon_lowestmode', '/channel', '/shot_number', '/degrade_flag', '/delta_time', 
-                 '/digital_elevation_model', '/elev_lowestmode', '/quality_flag', '/rh', '/sensitivity', '/digital_elevation_model_srtm', 
-                 '/elevation_bias_flag', '/surface_flag',  '/num_detectedmodes',  '/selected_algorithm',  '/solar_elevation','/geolocation/elev_lowestmode_a1',
-                 '/geolocation/lat_lowestmode_a1', '/geolocation/lon_lowestmode_a1', '/rx_processing_a1/mean', '/geolocation/num_detectedmodes_a1',
-    	     '/rx_processing_a1/stddev', '/geolocation/sensitivity_a1', '/rx_processing_a1/zcross0','/rx_processing_a1/botloc','/rx_processing_a1/toploc',
-                 '/rx_processing_a1/zcross_amp', '/rx_processing_a1/zcross', '/rx_processing_a1/search_end', '/rx_processing_a1/rx_cumulative','/geolocation/rh_a1']
-    l2bSubset = ['/geolocation/lat_lowestmode', '/geolocation/lon_lowestmode', '/channel', '/geolocation/shot_number',
-                 '/cover', '/cover_z', '/fhd_normal', '/pai', '/pai_z',  '/rhov',  '/rhog', '/pavd_z', '/l2a_quality_flag', '/l2b_quality_flag', '/rh100', '/sensitivity',
-                 '/stale_return_flag', '/surface_flag', '/geolocation/degrade_flag',  '/geolocation/solar_elevation',
-                 '/geolocation/delta_time', '/geolocation/digital_elevation_model', '/geolocation/elev_lowestmode','/rx_processing/rx_energy_a1',
-                 '/geolocation/latitude_bin0','/geolocation/longitude_bin0']
+    l2aSubset = [
+    '/lat_lowestmode', '/lon_lowestmode', '/channel', '/shot_number', '/degrade_flag', '/delta_time',
+    '/digital_elevation_model', '/elev_lowestmode', '/quality_flag', '/rh', '/sensitivity', '/digital_elevation_model_srtm',
+    '/elevation_bias_flag', '/surface_flag', '/num_detectedmodes', '/selected_algorithm', '/solar_elevation',
+    '/geolocation/elev_lowestmode_a1', '/geolocation/lat_lowestmode_a1', '/geolocation/lon_lowestmode_a1','/rx_processing_a1/rx_modeamps',
+    '/rx_processing_a1/mean', '/geolocation/num_detectedmodes_a1', '/rx_processing_a1/stddev',
+    '/geolocation/sensitivity_a1', '/rx_processing_a1/zcross0', '/rx_processing_a1/botloc', '/rx_processing_a1/toploc',
+    '/rx_processing_a1/zcross_amp', '/rx_processing_a1/zcross', '/rx_processing_a1/search_end', '/rx_processing_a1/rx_cumulative',
+    '/geolocation/rh_a1',
+    '/geolocation/elev_lowestmode_a2', '/geolocation/lat_lowestmode_a2', '/geolocation/lon_lowestmode_a2',
+    '/rx_processing_a2/mean', '/geolocation/num_detectedmodes_a2', '/rx_processing_a2/stddev',
+    '/geolocation/sensitivity_a2', '/rx_processing_a2/zcross0', '/rx_processing_a2/botloc', '/rx_processing_a2/toploc',
+    '/rx_processing_a2/zcross_amp', '/rx_processing_a2/zcross', '/rx_processing_a2/search_end', '/rx_processing_a2/rx_cumulative',
+    '/geolocation/rh_a2',
+    '/geolocation/elev_lowestmode_a3', '/geolocation/lat_lowestmode_a3', '/geolocation/lon_lowestmode_a3',
+    '/rx_processing_a3/mean', '/geolocation/num_detectedmodes_a3', '/rx_processing_a3/stddev',
+    '/geolocation/sensitivity_a3', '/rx_processing_a3/zcross0', '/rx_processing_a3/botloc', '/rx_processing_a3/toploc',
+    '/rx_processing_a3/zcross_amp', '/rx_processing_a3/zcross', '/rx_processing_a3/search_end', '/rx_processing_a3/rx_cumulative',
+    '/geolocation/rh_a3',
+    '/geolocation/elev_lowestmode_a4', '/geolocation/lat_lowestmode_a4', '/geolocation/lon_lowestmode_a4',
+    '/rx_processing_a4/mean', '/geolocation/num_detectedmodes_a4', '/rx_processing_a4/stddev',
+    '/geolocation/sensitivity_a4', '/rx_processing_a4/zcross0', '/rx_processing_a4/botloc', '/rx_processing_a4/toploc',
+    '/rx_processing_a4/zcross_amp', '/rx_processing_a4/zcross', '/rx_processing_a4/search_end', '/rx_processing_a4/rx_cumulative',
+    '/geolocation/rh_a4',
+    '/geolocation/elev_lowestmode_a5', '/geolocation/lat_lowestmode_a5', '/geolocation/lon_lowestmode_a5',
+    '/rx_processing_a5/mean', '/geolocation/num_detectedmodes_a5', '/rx_processing_a5/stddev',
+    '/geolocation/sensitivity_a5', '/rx_processing_a5/zcross0', '/rx_processing_a5/botloc', '/rx_processing_a5/toploc',
+    '/rx_processing_a5/zcross_amp', '/rx_processing_a5/zcross', '/rx_processing_a5/search_end', '/rx_processing_a5/rx_cumulative',
+    '/geolocation/rh_a5',
+    '/geolocation/elev_lowestmode_a6', '/geolocation/lat_lowestmode_a6', '/geolocation/lon_lowestmode_a6',
+    '/rx_processing_a6/mean', '/geolocation/num_detectedmodes_a6', '/rx_processing_a6/stddev',
+    '/geolocation/sensitivity_a6', '/rx_processing_a6/zcross0', '/rx_processing_a6/botloc', '/rx_processing_a6/toploc',
+    '/rx_processing_a6/zcross_amp', '/rx_processing_a6/zcross', '/rx_processing_a6/search_end', '/rx_processing_a6/rx_cumulative',
+    '/geolocation/rh_a6'
+    ]
+
+    l2bSubset = [
+    '/geolocation/lat_lowestmode', '/geolocation/lon_lowestmode', '/channel', '/geolocation/shot_number',
+    '/cover', '/cover_z', '/fhd_normal', '/pai', '/pai_z', '/rhov', '/rhog', '/pavd_z', '/l2a_quality_flag', 
+    '/l2b_quality_flag', '/rh100', '/sensitivity', '/stale_return_flag', '/surface_flag', '/geolocation/degrade_flag',
+    '/geolocation/solar_elevation', '/geolocation/delta_time', '/geolocation/digital_elevation_model', 
+    '/geolocation/elev_lowestmode', '/rx_processing/rx_energy_a1',
+    '/geolocation/latitude_bin0', '/geolocation/longitude_bin0',
+    '/geolocation/lat_lowestmode_a2', '/geolocation/lon_lowestmode_a2', '/geolocation/shot_number_a2',
+    '/rx_processing/rx_energy_a2', '/geolocation/latitude_bin0_a2', '/geolocation/longitude_bin0_a2',
+    '/geolocation/lat_lowestmode_a3', '/geolocation/lon_lowestmode_a3', '/geolocation/shot_number_a3',
+    '/rx_processing/rx_energy_a3', '/geolocation/latitude_bin0_a3', '/geolocation/longitude_bin0_a3',
+    '/geolocation/lat_lowestmode_a4', '/geolocation/lon_lowestmode_a4', '/geolocation/shot_number_a4',
+    '/rx_processing/rx_energy_a4', '/geolocation/latitude_bin0_a4', '/geolocation/longitude_bin0_a4',
+    '/geolocation/lat_lowestmode_a5', '/geolocation/lon_lowestmode_a5', '/geolocation/shot_number_a5',
+    '/rx_processing/rx_energy_a5', '/geolocation/latitude_bin0_a5', '/geolocation/longitude_bin0_a5',
+    '/geolocation/lat_lowestmode_a6', '/geolocation/lon_lowestmode_a6', '/geolocation/shot_number_a6',
+    '/rx_processing/rx_energy_a6', '/geolocation/latitude_bin0_a6', '/geolocation/longitude_bin0_a6'
+    ]   
      
     # -------------------IMPORT GEDI FILES AS GEODATAFRAMES AND CLIP TO ROI-------------------------- #   
     # Loop through each GEDI file and export as a point geojson
@@ -635,7 +797,7 @@ def csv():
     gediFiles = [o for o in os.listdir() if o.endswith('.h5') and 'GEDI' in o]
     for g in gediFiles:
         l += 1
-        print(f"Processing file: {g} ({l}/{len(gediFiles)})")
+        # print(f"Processing file: {g} ({l}/{len(gediFiles)})")
         gedi = h5py.File(g, 'r')      # Open file
         gediName = g.split('.h5')[0]  # Keep original filename 
         gedi_objs = []            
@@ -700,7 +862,7 @@ def csv():
         gediDF.crs = 'EPSG:4326'
         
         if gediDF.shape[0] == 0:
-            print(f"No intersecting shots were found between {g} and the region of interest submitted.")
+            # print(f"No intersecting shots were found between {g} and the region of interest submitted.")
             continue
         del lats, lons, shots
         
@@ -720,7 +882,7 @@ def csv():
                 maxdex = max(gediDF[gediDF['BEAM'] == b]['index']) + 1
                 shots = gedi[shot][mindex:maxdex]
             except ValueError:
-                print(f"No intersecting shots found for {b}")
+                # print(f"No intersecting shots found for {b}")
                 continue
             # Loop through and extract each SDS subset and add to DF
             for s in beamSDS:
@@ -775,9 +937,9 @@ def csv():
                     for i in range(gedi[s].shape[0]):
                         beamDF[f'{surfaces[i]}'] = allData[i][mindex:maxdex]
                     del allData
-                else:
-                    print(f"SDS: {s} not found")
-                print(f"Processing {j} of {len(beamSDS) * len(beams)}: {s}")
+                # else:
+                #     print(f"SDS: {s} not found")
+                # print(f"Processing {j} of {len(beamSDS) * len(beams)}: {s}")
             
             beamsDF = pd.concat([beamsDF, beamDF])
         del beamDF, beamSDS, beams, gedi, gediSDS, shots, sdsSubset
@@ -802,56 +964,158 @@ def csv():
             
             # Export final geodataframe as csv
             outDF.to_csv(f"{outDir}{g.replace('.h5', '.csv')}", index=False)
-            print(f"{g.replace('.h5', '.csv')} saved at: {outDir}")
+            # print(f"{g.replace('.h5', '.csv')} saved at: {outDir}")
         except ValueError:
             print(f"{g} intersects the bounding box of the input ROI, but no shots intersect final clipped ROI.")
+
+
+
+# Merge all CSV et ajout de VA et SNR
+def merge_csv_on_id(output_dir):
+    parentDir = os.path.dirname(os.path.abspath(output_dir))
+    
+    # Liste de tous les fichiers CSV dans le répertoire de sortie
+    csv_files = glob.glob(os.path.join(output_dir, '*.csv'))
+    
+    # Création de la boîte de dialogue avec une barre de chargement et un label
+    progress_dialog = QDialog()
+    progress_dialog.setWindowTitle("Processing Files")
+    layout = QVBoxLayout(progress_dialog)
+    progress_bar = QProgressBar()
+    label = QLabel("Starting process...")
+    layout.addWidget(label)
+    layout.addWidget(progress_bar)
+    progress_dialog.setLayout(layout)
+    progress_dialog.show()
+
+    # Initialisation du DataFrame final
+    final_df = pd.DataFrame()
+
+    total_files = len(csv_files)
+    progress_bar.setMaximum(total_files)
+    
+    for i, csv_file in enumerate(csv_files):
+        # Mise à jour de la barre de chargement
+        progress_bar.setValue(i + 1)
+        label.setText(f"Processing file {i + 1} of {total_files}: {os.path.basename(csv_file)}")
+        QApplication.processEvents()  # Assurez-vous que l'UI se met à jour
+        
+        # Lecture du CSV
+        df = pd.read_csv(csv_file)
+        
+        # Fusion avec le DataFrame final basé sur la colonne 'IDS'
+        if final_df.empty:
+            final_df = df
+        else:
+            final_df = pd.merge(final_df, df, on='IDS', how='outer', suffixes=('', '_new'))
+            for column in df.columns:
+                if column != 'IDS' and f'{column}_new' in final_df.columns:
+                    final_df[column].fillna(final_df[f'{column}_new'], inplace=True)
+                    final_df.drop(columns=[f'{column}_new'], inplace=True)
+                    
+    # Récupération des colonnes nécessaires
+    if all(col in final_df.columns for col in [
+        'rx_processing_a1_mean', 'rx_processing_a1_stddev', 'rx_processing_a1_rx_modeamps',
+        'geolocation_longitude_bin0', 'geolocation_latitude_bin0',
+        'geolocation_longitude_instrument', 'geolocation_latitude_instrument',
+        'geolocation_altitude_instrument']):
+        
+        mean = final_df['rx_processing_a1_mean']
+        stddev = final_df['rx_processing_a1_stddev']
+        lon1 = final_df['geolocation_longitude_bin0']
+        lat1 = final_df['geolocation_latitude_bin0']
+        lon2 = final_df['geolocation_longitude_instrument']
+        lat2 = final_df['geolocation_latitude_instrument']
+        altitude_i = final_df['geolocation_altitude_instrument']
+        
+        # Extraction des colonnes rx_modeamps
+        amp_columns = [col for col in final_df.columns if col.startswith('rx_processing_a1_rx_modeamps_')]
+        maxamp = final_df[amp_columns].max(axis=1)
+        
+        # Calcul du SNR
+        final_df['SNR'] = [10*math.log10((x-y)/z) if (z > 0 and x > y) else 0 for x, y, z in zip(maxamp, mean, stddev)]
+        
+        # Calcul du VA
+        VA_metric = [VA(lo1, la1, lo2, la2, al) for lo1, la1, lo2, la2, al in zip(lon1, lat1, lon2, lat2, altitude_i)]
+        final_df['VA'] = VA_metric
+        
+    # Enregistrement du DataFrame fusionné
+    final_output_path = os.path.join(parentDir, 'merged_output.csv')
+    final_df.to_csv(final_output_path, index=False)
+    
+    # Mise à jour finale de la barre de progression et du label
+    progress_bar.setValue(total_files)
+    label.setText(f"Process complete. File saved to: {final_output_path}")
+    
+    # Fermeture de la boîte de dialogue après un court délai
+    QApplication.processEvents()
+    progress_dialog.close()
+    
+    # Message de confirmation
+    QMessageBox.information(None, "Process Complete", f"Merged CSV file created at: {final_output_path}")
+
+ 
+# filter CSV file according to SNR
+def filtre(csvLineEdit):
+    
+    csvLineEdit = csvLineEdit.replace("/", "\\")
+    csvLineEdit = f'{csvLineEdit}'
+    parentDir = os.path.dirname(os.path.abspath(csvLineEdit))
+    # Lire le fichier CSV dans un DataFrame
+    df = pd.read_csv(csvLineEdit)
+    
+    
+    df = df[df['SNR'] != 0]
+    df = df[df['geolocation_num_detectedmodes_a1'] != 0]
+    df= df[abs(df['digital_elevation_model_srtm'] - df['geolocation_elev_lowestmode_a1']) < 100]
+    df= df[(df['rx_sample_count'] - df['rx_processing_a1_search_end']) > 0]
+    # Enregistrement du DataFrame fusionné
+    final_output_path = os.path.join(parentDir, 'merged_output.csv')
+    df.to_csv(final_output_path, index=False)
+    # Message de confirmation
+    QMessageBox.information(None, "Process Complete", "File filtered")
+
+
+def split_csv_on_algo(csvLineEdit):
+    csvLineEdit = csvLineEdit.replace("/", "\\")
+    csvLineEdit = f'{csvLineEdit}'
+    parentDir = os.path.dirname(os.path.abspath(csvLineEdit))
+    
+    # Lire le fichier CSV dans un DataFrame
+    df = pd.read_csv(csvLineEdit)
+    
+    # Liste des motifs de mots-clés
+    keywords = ['a1', 'a2', 'a3', 'a4', 'a5', 'a6']
+    
+    for keyword in keywords:
+        # Construire le motif d'exclusion pour le fichier courant
+        exclusion_keywords = [kw for kw in keywords if kw != keyword]
+        pattern = '|'.join([re.escape(kw) for kw in exclusion_keywords])
+        
+        # Sélectionner les colonnes qui ne contiennent pas les mots-clés d'exclusion
+        selected_columns = [col for col in df.columns if not re.search(pattern, col)]
+        
+        # Extraire les données filtrées
+        df_filtered = df[selected_columns]
+        
+        # Créer un dossier pour chaque algorithme (a1, a2, ...)
+        algo_folder = os.path.join(parentDir, keyword)
+        os.makedirs(algo_folder, exist_ok=True)
+        
+        # Diviser en paquets de 500 lignes
+        num_chunks = (len(df_filtered) // 500) + 1
+        
+        for chunk_number in range(num_chunks):
+            start_row = chunk_number * 500
+            end_row = (chunk_number + 1) * 500
             
-#%% EXTRACT ZIP
-def extract_h5_from_zip(file_path, label, progress_bar):
-    parent_directory = os.path.dirname(file_path)
-    input_folder = os.path.join(parent_directory, 'input')
-    os.makedirs(input_folder, exist_ok=True)
-
-    with zipfile.ZipFile(file_path, 'r') as zip_ref:
-        file_count = len([member for member in zip_ref.namelist() if member.lower().endswith('.h5')])
-        current_file = 0
-        for member in zip_ref.namelist():
-            if member.lower().endswith('.h5'):
-                current_file += 1
-                filename = os.path.basename(member)
-                target_path = os.path.join(input_folder, filename)
-                with zip_ref.open(member) as source, open(target_path, 'wb') as target:
-                    shutil.copyfileobj(source, target)
-                label.setText(f"All .h5 files extracted and stored in: {input_folder}")
-                progress_bar.setValue(int(current_file / file_count * 100))  # Update progress bar
-    progress_bar.setValue(100)  # Ensure progress bar is at 100% after completion
-
-
-
-
-#%% DOWNLOAD DATA 
-def open_pdf_file():
-    file_dialog = QFileDialog()
-    file_path, _ = file_dialog.getOpenFileName(None, "Open PDF File", "", "PDF Files (*.pdf)")
-    
-    if file_path:
-        # Assuming manual.pdf is the PDF you want to open in a web browser
-        manual_path = os.path.abspath("manual.pdf")
-        webbrowser.open_new_tab(f"file://{manual_path}")
-
+            # Extraire le sous-ensemble de données
+            df_chunk = df_filtered[start_row:end_row]
             
-def open_google_earth():
-    
-    if platform.system() == "Windows":
-        os.system('start "" "C:\\Program Files\\Google\\Google Earth Pro\\client\\googleearth.exe"')
-    elif platform.system() == "Darwin":  # macOS
-        os.system('open -a "Google Earth Pro"')
-    else:  # Assuming Linux
-        os.system('google-earth-pro')
-
-def open_gedi_website():
-    webbrowser.open('https://search.earthdata.nasa.gov/search')
-    
+            # Déterminer le nom du fichier de sortie avec suffixe _1, _2, etc.
+            output_file = os.path.join(algo_folder, f"{keyword}_{chunk_number + 1}.csv")
+            df_chunk.to_csv(output_file, index=False, sep=';', encoding='utf-8-sig')
+            print(f"Fichier {output_file} créé avec succès.")
     
 #%% OPEN MAP 
 def open_map():
