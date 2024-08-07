@@ -54,20 +54,83 @@ def create_main_window():
     utilities_tab.setLayout(utilities_layout)
     
     open_pdf_button = QPushButton("Open User Manual")
-    open_pdf_button.clicked.connect(open_pdf_file)
+    open_pdf_button.clicked.connect(open_pp_file)
+    open_pdf_button.setStyleSheet("""
+        QPushButton {
+            background: #3498db;
+            color: white;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+        }
+        QPushButton:hover {
+            background: #2980b9;
+        }
+        QPushButton:pressed {
+            background: #1f618d;
+        }
+    """)
     utilities_layout.addWidget(open_pdf_button)
 
     open_google_earth_button = QPushButton("Open Google Earth Pro")
     open_google_earth_button.clicked.connect(open_google_earth)
+    open_google_earth_button.setStyleSheet("""
+        QPushButton {
+            background: #3498db;
+            color: white;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+        }
+        QPushButton:hover {
+            background: #2980b9;
+        }
+        QPushButton:pressed {
+            background: #1f618d;
+        }
+    """)
     utilities_layout.addWidget(open_google_earth_button)
     
     open_gedi_website_button = QPushButton("Open GEDI Data Download Page")
     open_gedi_website_button.clicked.connect(open_gedi_website)
+    open_gedi_website_button.setStyleSheet("""
+        QPushButton {
+            background: #3498db;
+            color: white;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+        }
+        QPushButton:hover {
+            background: #2980b9;
+        }
+        QPushButton:pressed {
+            background: #1f618d;
+        }
+    """)
     utilities_layout.addWidget(open_gedi_website_button)
 
     quit_button = QPushButton("Close")
     quit_button.clicked.connect(QApplication.instance().quit)
-    quit_button.setProperty('class', 'quit-button')
+    quit_button.setStyleSheet("""
+        QPushButton {
+            background: #e74c3c;
+            color: white;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+        }
+        QPushButton:hover {
+            background: #c0392b;
+        }
+        QPushButton:pressed {
+            background: #a93226;
+        }
+    """)
     utilities_layout.addWidget(quit_button)
     tab_widget.addTab(utilities_tab, "DOWNLOAD")
 
@@ -79,22 +142,12 @@ def create_main_window():
     unzip_label = QLabel("Drag and drop zip files here to extract .h5 files:")
     unzip_label.setAlignment(Qt.AlignCenter)
     unzip_label.setFont(QFont('Arial', 12))
-    quit_button = QPushButton("Close")
-    quit_button.clicked.connect(QApplication.instance().quit)
-    quit_button.setProperty('class', 'quit-button')
-    
+    unzip_label.setStyleSheet("font-size: 16px; color: #ecf0f1;")
     unzip_layout.addWidget(unzip_label)
     
-    progress_bar = QProgressBar()
-    progress_bar.setRange(0, 100)
-    progress_bar.setValue(0)
-    progress_bar.setAlignment(Qt.AlignCenter)
-    unzip_layout.addWidget(progress_bar)
-    unzip_layout.addWidget(quit_button)
-    
     def drag_enter_event(event):
-        if event.mimeData().hasUrls():
-            event.acceptProposedAction()
+       if event.mimeData().hasUrls():
+           event.acceptProposedAction()
 
     def drop_event(event, label):
         urls = event.mimeData().urls()
@@ -104,11 +157,53 @@ def create_main_window():
                 label.setText(f"File dropped: {file_path}")
                 if file_path.endswith('.zip'):
                     extract_h5_from_zip(file_path, label, progress_bar)
-
+ 
     central_widget.dragEnterEvent = lambda event: drag_enter_event(event)
     central_widget.dropEvent = lambda event: drop_event(event, unzip_label)
     central_widget.setAcceptDrops(True)
 
+    tab_widget.addTab(unzip_tab, "Drag and Drop Unzipper")
+
+    
+    progress_bar = QProgressBar()
+    progress_bar.setRange(0, 100)
+    progress_bar.setValue(0)
+    progress_bar.setAlignment(Qt.AlignCenter)
+    progress_bar.setStyleSheet("""
+        QProgressBar {
+            border: none;
+            border-radius: 8px;
+            background-color: #34495e;
+            text-align: center;
+            color: #ecf0f1;
+        }
+        QProgressBar::chunk {
+            background-color: #3498db;
+            width: 8px;
+            margin: 0.5px;
+        }
+    """)
+    unzip_layout.addWidget(progress_bar)
+
+    quit_button = QPushButton("Close")
+    quit_button.clicked.connect(QApplication.instance().quit)
+    quit_button.setStyleSheet("""
+        QPushButton {
+            background: #e74c3c;
+            color: white;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+        }
+        QPushButton:hover {
+            background: #c0392b;
+        }
+        QPushButton:pressed {
+            background: #a93226;
+        }
+    """)
+    unzip_layout.addWidget(quit_button)
     tab_widget.addTab(unzip_tab, "Drag and Drop Unzipper")
 
     # Tab for GEDI Data Processor
@@ -117,20 +212,59 @@ def create_main_window():
     gedi_tab.setLayout(gedi_layout)
     
     inDirLabel = QLabel("Enter the local directory containing GEDI files to be processed:")
+    inDirLayout = QHBoxLayout()  # Create a new layout for the input directory
     inDirLineEdit = QLineEdit()
     browseDirButton = QPushButton("Browse")
     browseDirButton.clicked.connect(lambda: browse_directory(inDirLineEdit))
-
+    browseDirButton.setStyleSheet("""
+        QPushButton {
+            background: #3498db;
+            color: white;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+        }
+        QPushButton:hover {
+            background: #2980b9;
+        }
+        QPushButton:pressed {
+            background: #1f618d;
+        }
+    """)
+    inDirLayout.addWidget(inDirLineEdit)
+    inDirLayout.addWidget(browseDirButton)
+    
     kmlLabel = QLabel("Select KML file to extract ROI:")
+    kmlLayout = QHBoxLayout()  # Create a new layout for the KML selection
     kmlLineEdit = QLineEdit()
     browseKMLButton = QPushButton("Browse")
     browseKMLButton.clicked.connect(lambda: browse_kml(kmlLineEdit))
+    browseKMLButton.setStyleSheet("""
+        QPushButton {
+            background: #3498db;
+            color: white;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+        }
+        QPushButton:hover {
+            background: #2980b9;
+        }
+        QPushButton:pressed {
+            background: #1f618d;
+        }
+    """)
+    kmlLayout.addWidget(kmlLineEdit)
+    kmlLayout.addWidget(browseKMLButton)
 
     global roiLineEdit
     roiLabel = QLabel("Region of interest (ROI) extracted:")
     roiLineEdit = QLineEdit()
     roiLineEdit.setReadOnly(True)
-
+    line_edit_refs['roi'] = roiLineEdit 
+    
     outputFileLineEdit = "out.h5"
 
     beamsLabel = QLabel("Enter specific beams to be included in the output GeoJSON (optional, default is all beams):")
@@ -139,66 +273,189 @@ def create_main_window():
     sdsLabel = QLabel("Enter specific science datasets (SDS) to include in the output GeoJSON (optional):")
     sdsLineEdit = QLineEdit()
 
-    
     processButton = QPushButton("Process Files")
     processButton.clicked.connect(lambda: process_files(inDirLineEdit, roiLineEdit, outputFileLineEdit, beamsLineEdit, sdsLineEdit))
-    processButton.setProperty('class', 'proc-button')
+    processButton.setStyleSheet("""
+        QPushButton {
+            background: #08c993;
+            color: white;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+        }
+        QPushButton:hover {
+            background: #0aa378;
+        }
+        QPushButton:pressed {
+            background: #0a9f6a;
+        }
+    """)
     
-
-            
     outDirLabel = QLabel("Enter the local directory containing CSV files to be merged:")
+    outDirLayout = QHBoxLayout()  # Create a new layout for the output directory
     outDirLineEdit = QLineEdit()
     browseoutButton = QPushButton("Browse")
     browseoutButton.clicked.connect(lambda: browse_directory(outDirLineEdit))
+    browseoutButton.setStyleSheet("""
+        QPushButton {
+            background: #3498db;
+            color: white;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+        }
+        QPushButton:hover {
+            background: #2980b9;
+        }
+        QPushButton:pressed {
+            background: #1f618d;
+        }
+    """)
+    outDirLayout.addWidget(outDirLineEdit)
+    outDirLayout.addWidget(browseoutButton)
     
     mergeButton = QPushButton("Merge CSV")
     mergeButton.clicked.connect(lambda: merge_csv_on_id(outDirLineEdit.text()))
-    mergeButton.setProperty('class', 'merge-button')
+    mergeButton.setStyleSheet("""
+        QPushButton {
+            background: #08c993;
+            color: white;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+        }
+        QPushButton:hover {
+            background: #0aa378;
+        }
+        QPushButton:pressed {
+            background: #0a9f6a;
+        }
+    """)
     
     csvLabel = QLabel("Select CSV file to be filtered:")
+    csvLayout = QHBoxLayout()  # Create a new layout for the CSV selection
     csvLineEdit = QLineEdit()
     browseCSVButton = QPushButton("Browse")
     browseCSVButton.clicked.connect(lambda: browse_csv(csvLineEdit))
+    browseCSVButton.setStyleSheet("""
+        QPushButton {
+            background: #3498db;
+            color: white;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+        }
+        QPushButton:hover {
+            background: #2980b9;
+        }
+        QPushButton:pressed {
+            background: #1f618d;
+        }
+    """)
+    csvLayout.addWidget(csvLineEdit)
+    csvLayout.addWidget(browseCSVButton)
     
     filterButton = QPushButton("Filter CSV")
     filterButton.clicked.connect(lambda: filtre(csvLineEdit.text()))
-    filterButton.setProperty('class', 'filter-button')
-    
+    filterButton.setStyleSheet("""
+        QPushButton {
+            background: #08c993;
+            color: white;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+        }
+        QPushButton:hover {
+            background: #0aa378;
+        }
+        QPushButton:pressed {
+            background: #0a9f6a;
+        }
+    """)
     
     csvLabel2 = QLabel("Select CSV file to be split according to algorithms:")
+    csvLayout2 = QHBoxLayout()  # Create a new layout for the second CSV selection
     csvLineEdit2 = QLineEdit()
     browseCSVButton2 = QPushButton("Browse")
     browseCSVButton2.clicked.connect(lambda: browse_csv(csvLineEdit2))
+    browseCSVButton2.setStyleSheet("""
+        QPushButton {
+            background: #3498db;
+            color: white;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+        }
+        QPushButton:hover {
+            background: #2980b9;
+        }
+        QPushButton:pressed {
+            background: #1f618d;
+        }
+    """)
+    csvLayout2.addWidget(csvLineEdit2)
+    csvLayout2.addWidget(browseCSVButton2)
     
     splitButton = QPushButton("Split CSV")
     splitButton.clicked.connect(lambda: split_csv_on_algo(csvLineEdit2.text()))
-    splitButton.setProperty('class', 'split-button')
+    splitButton.setStyleSheet("""
+        QPushButton {
+            background: #08c993;
+            color: white;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+        }
+        QPushButton:hover {
+            background: #0aa378;
+        }
+        QPushButton:pressed {
+            background: #0a9f6a;
+        }
+    """)
     
     gedi_layout.addWidget(inDirLabel)
-    gedi_layout.addWidget(inDirLineEdit)
-    gedi_layout.addWidget(browseDirButton)
+    gedi_layout.addLayout(inDirLayout)  # Add the input directory layout
     gedi_layout.addWidget(kmlLabel)
-    gedi_layout.addWidget(kmlLineEdit)
-    gedi_layout.addWidget(browseKMLButton)
+    gedi_layout.addLayout(kmlLayout)  # Add the KML selection layout
     gedi_layout.addWidget(sdsLabel)
     gedi_layout.addWidget(sdsLineEdit)
     gedi_layout.addWidget(processButton)
     gedi_layout.addWidget(outDirLabel)
-    gedi_layout.addWidget(outDirLineEdit)
-    gedi_layout.addWidget(browseoutButton)
+    gedi_layout.addLayout(outDirLayout)  # Add the output directory layout
     gedi_layout.addWidget(mergeButton)
     gedi_layout.addWidget(csvLabel)
-    gedi_layout.addWidget(csvLineEdit)
-    gedi_layout.addWidget(browseCSVButton)
+    gedi_layout.addLayout(csvLayout)  # Add the CSV selection layout
     gedi_layout.addWidget(filterButton)
     gedi_layout.addWidget(csvLabel2)
-    gedi_layout.addWidget(csvLineEdit2)
-    gedi_layout.addWidget(browseCSVButton2)
+    gedi_layout.addLayout(csvLayout2)  # Add the second CSV selection layout
     gedi_layout.addWidget(splitButton)
     
     quit_button = QPushButton("Close")
     quit_button.clicked.connect(QApplication.instance().quit)
-    quit_button.setProperty('class', 'quit-button')
+    quit_button.setStyleSheet("""
+        QPushButton {
+            background: #e74c3c;
+            color: white;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+        }
+        QPushButton:hover {
+            background: #c0392b;
+        }
+        QPushButton:pressed {
+            background: #a93226;
+        }
+    """)
     gedi_layout.addWidget(quit_button)
     tab_widget.addTab(gedi_tab, "GEDI Data Processor")
     
@@ -208,12 +465,43 @@ def create_main_window():
     MAP_tab.setLayout(MAP_layout)
     map_button = QPushButton("Open Map")
     map_button.clicked.connect(open_map)
+    map_button.setStyleSheet("""
+        QPushButton {
+            background: #3498db;
+            color: white;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+        }
+        QPushButton:hover {
+            background: #2980b9;
+        }
+        QPushButton:pressed {
+            background: #1f618d;
+        }
+    """)
     MAP_layout.addWidget(map_button)
-    tab_widget.addTab(MAP_tab, "MAP")
     quit_button = QPushButton("Close")
     quit_button.clicked.connect(QApplication.instance().quit)
-    quit_button.setProperty('class', 'quit-button')
+    quit_button.setStyleSheet("""
+        QPushButton {
+            background: #e74c3c;
+            color: white;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+        }
+        QPushButton:hover {
+            background: #c0392b;
+        }
+        QPushButton:pressed {
+            background: #a93226;
+        }
+    """)
     MAP_layout.addWidget(quit_button)
+    tab_widget.addTab(MAP_tab, "MAP")
     layout.addWidget(tab_widget)
 
     # Apply stylesheet
@@ -226,72 +514,42 @@ def create_main_window():
     }
     
     QProgressBar {
-        border: 1px solid #7f8c8d;
-        border-radius: 5px;
-        background-color: #2c3e50;
+        border: none;
+        border-radius: 8px;
+        background-color: #34495e;
         text-align: center;
         color: #ecf0f1;
     }
     QProgressBar::chunk {
         background-color: #3498db;
-        width: 5px;
+        width: 8px;
         margin: 0.5px;
     }
     
     QLabel {
-        font-size: 14px;
+        font-size: 16px;
         color: #ecf0f1;
     }
     
     QLineEdit {
         padding: 8px;
-        font-size: 14px;
-        border-radius: 5px;
+        font-size: 16px;
+        border-radius: 8px;
         border: 1px solid #3498db;
         background-color: #2c3e50;
         color: #ecf0f1;
     }
     
-    QPushButton {
-        background-color: #2980b9;
-        color: white;
-        font-weight: bold;
+    QTabWidget::pane {
         border: none;
-        padding: 10px 20px;
-        font-size: 14px;
-        border-radius: 5px;
-        transition: background-color 0.3s ease;
-    }
-    QPushButton:hover {
-        background-color: #1f618d;
-    }
-    QPushButton:pressed {
-        background-color: #1a5276;
-    }
-    
-    .proc-button,.merge-button, .split-button, .filter-button {
-        background-color: #08c993;
-    }
-    .proc-button:hover,.merge-button:hover, .split-button:hover, .filter-button:hover {
-        background-color: #0aa378;
-    }
-    .proc-button:pressed,.merge-button:pressed, .split-button:pressed ,.filter-button:pressed{
-        background-color: #0aa378;
-    }
-
-    .quit-button {
-        background-color: #e74c3c;
-    }
-    .quit-button:hover {
-        background-color: #c0392b;
     }
     
     QTabBar::tab {
         background-color: #34495e;
         color: #bdc3c7;
         padding: 10px;
-        border: 1px solid #7f8c8d;
-        border-bottom: none;
+        border: none;
+        border-bottom: 2px solid #2c3e50;
     }
     QTabBar::tab:selected {
         background-color: #2c3e50;
@@ -302,19 +560,18 @@ def create_main_window():
     }
     """)
 
-    line_edit_refs['roi'] = roiLineEdit
-
     return main_window
 
+
 #%% DOWNLOAD DATA 
-def open_pdf_file():
+def open_pp_file():
+    # Ouvre un dialogue pour sélectionner un fichier PPTX
     file_dialog = QFileDialog()
-    file_path, _ = file_dialog.getOpenFileName(None, "Open PDF File", "", "PDF Files (*.pdf)")
+    file_path, _ = file_dialog.getOpenFileName(None, "Open PP File", "", "PPTX Files (*.pptx)")
     
     if file_path:
-        # Assuming manual.pdf is the PDF you want to open in a web browser
-        manual_path = os.path.abspath("manual.pdf")
-        webbrowser.open_new_tab(f"file://{manual_path}")
+        # Ouvre le fichier PPTX sélectionné dans PowerPoint
+        os.startfile(file_path)
 
             
 def open_google_earth():
