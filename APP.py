@@ -39,7 +39,7 @@ line_edit_refs = {}
 
 def create_main_window():
     main_window = QMainWindow()
-    main_window.setWindowTitle('GEDI Data Processor')
+    main_window.setWindowTitle('GEDI VIEWER')
     main_window.setGeometry(400, 200, 1000, 700)
 
     central_widget = QWidget()
@@ -584,13 +584,18 @@ def create_main_window():
 
 #%% DOWNLOAD DATA 
 def open_pp_file():
-    # Ouvre un dialogue pour sélectionner un fichier PPTX
-    file_dialog = QFileDialog()
-    file_path, _ = file_dialog.getOpenFileName(None, "Open PP File", "", "PPTX Files (*.pptx)")
+    # Obtient le chemin absolu du répertoire où se trouve le script
+    script_dir = os.path.dirname(os.path.abspath(__file__))
     
-    if file_path:
-        # Ouvre le fichier PPTX sélectionné dans PowerPoint
+    # Construit le chemin complet vers MANUAL.pptx
+    file_path = os.path.join(script_dir, "MANUAL.pptx")
+    
+    # Vérifie si le fichier existe
+    if os.path.exists(file_path):
+        # Ouvre le fichier PPTX dans PowerPoint
         os.startfile(file_path)
+    else:
+        print("Le fichier MANUAL.pptx n'existe pas dans le répertoire du script.")
 
             
 def open_google_earth():
