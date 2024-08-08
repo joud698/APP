@@ -11,7 +11,7 @@ from shapely.geometry import Polygon
 import geopandas as gp
 import numpy as np
 import warnings
-from PyQt5.QtWidgets import QDialog,QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QLineEdit, QPushButton, QFileDialog, QMessageBox, QTabWidget, QProgressBar,  QPlainTextEdit
+from PyQt5.QtWidgets import QDialog,QApplication, QMainWindow, QLabel, QVBoxLayout,QGridLayout, QWidget, QLineEdit, QPushButton, QFileDialog, QMessageBox, QTabWidget, QProgressBar,  QPlainTextEdit
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from fastkml import kml
@@ -40,7 +40,7 @@ line_edit_refs = {}
 def create_main_window():
     main_window = QMainWindow()
     main_window.setWindowTitle('GEDI Data Processor')
-    main_window.setGeometry(100, 100, 800, 600)
+    main_window.setGeometry(400, 200, 1000, 700)
 
     central_widget = QWidget()
     layout = QVBoxLayout()
@@ -53,8 +53,13 @@ def create_main_window():
     utilities_tab = QWidget()
     utilities_layout = QVBoxLayout()
     utilities_tab.setLayout(utilities_layout)
-    
+
+    # Layout horizontal pour aligner les boutons côte à côte
+    buttons_layout = QHBoxLayout()
+
+    # Bouton pour ouvrir le manuel PDF
     open_pdf_button = QPushButton("📄 Open User Manual")
+    open_pdf_button.setFixedSize(300, 500)  # Taille uniforme pour tous les boutons
     open_pdf_button.clicked.connect(open_pp_file)
     open_pdf_button.setStyleSheet("""
         QPushButton {
@@ -72,9 +77,11 @@ def create_main_window():
             background: #1f618d;
         }
     """)
-    utilities_layout.addWidget(open_pdf_button)
+    buttons_layout.addWidget(open_pdf_button)
 
+    # Bouton pour ouvrir Google Earth
     open_google_earth_button = QPushButton("🌍 Open Google Earth Pro")
+    open_google_earth_button.setFixedSize(300, 500)  # Taille uniforme
     open_google_earth_button.clicked.connect(open_google_earth)
     open_google_earth_button.setStyleSheet("""
         QPushButton {
@@ -92,9 +99,11 @@ def create_main_window():
             background: #1f618d;
         }
     """)
-    utilities_layout.addWidget(open_google_earth_button)
-    
+    buttons_layout.addWidget(open_google_earth_button)
+
+    # Bouton pour ouvrir la page de téléchargement des données GEDI
     open_gedi_website_button = QPushButton("🌐 Open GEDI Data Download Page")
+    open_gedi_website_button.setFixedSize(300, 500)  # Taille uniforme
     open_gedi_website_button.clicked.connect(open_gedi_website)
     open_gedi_website_button.setStyleSheet("""
         QPushButton {
@@ -112,9 +121,14 @@ def create_main_window():
             background: #1f618d;
         }
     """)
-    utilities_layout.addWidget(open_gedi_website_button)
+    buttons_layout.addWidget(open_gedi_website_button)
 
+    # Ajouter les boutons à l'interface
+    utilities_layout.addLayout(buttons_layout)
+
+    # Bouton pour fermer l'application
     quit_button = QPushButton("❌ Close")
+    quit_button.setFixedSize(300, 50)  # Taille uniforme
     quit_button.clicked.connect(QApplication.instance().quit)
     quit_button.setStyleSheet("""
         QPushButton {
@@ -133,6 +147,7 @@ def create_main_window():
         }
     """)
     utilities_layout.addWidget(quit_button)
+
     tab_widget.addTab(utilities_tab, "DOWNLOAD")
 
     # Tab for Drag and Drop Unzipper
@@ -463,9 +478,11 @@ def create_main_window():
     
     # Tab for MAP
     MAP_tab = QWidget()
-    MAP_layout = QVBoxLayout()
+    MAP_layout = QGridLayout()
     MAP_tab.setLayout(MAP_layout)
     map_button = QPushButton("🗺️ Open Map")
+    map_button.setFixedSize(1000, 500)
+    
     map_button.clicked.connect(open_map)
     map_button.setStyleSheet("""
         QPushButton {
@@ -1373,12 +1390,14 @@ def split_csv_on_algo(csvLineEdit):
         algo_folder = os.path.join(parentDir, keyword)
         os.makedirs(algo_folder, exist_ok=True)
         
-        # Diviser en paquets de 500 lignes
-        num_chunks = (len(df_filtered) // 500) + 1
+        
+        # Diviser en paquets 
+        TAILLE_MAX = 200
+        num_chunks = (len(df_filtered) // TAILLE_MAX) + 1
         
         for chunk_number in range(num_chunks):
-            start_row = chunk_number * 500
-            end_row = (chunk_number + 1) * 500
+            start_row = chunk_number * TAILLE_MAX
+            end_row = (chunk_number + 1) * TAILLE_MAX
             
             # Extraire le sous-ensemble de données
             df_chunk = df_filtered[start_row:end_row]
