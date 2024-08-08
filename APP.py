@@ -32,6 +32,7 @@ from PyQt5.QtGui import QFont
 import matplotlib.pyplot as plt 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import folium
+from datetime import datetime, timedelta
 #%% MAIN WINDOW
 # Global variable to hold references to QLineEdit widgets
 line_edit_refs = {}
@@ -1296,6 +1297,14 @@ def merge_csv_on_id(output_dir):
         VA_metric = [VA(lo1, la1, lo2, la2, al) for lo1, la1, lo2, la2, al in zip(lon1, lat1, lon2, lat2, altitude_i)]
         final_df['VA'] = VA_metric
         
+        # Calcul du Datetime
+        final_df['DateTime'] = final_df['delta_time'].apply(lambda x: (datetime(2018, 1, 1, 0, 0, 0) + timedelta(seconds=x)) if not pd.isna(x) else pd.NaT)
+        
+    # Réorganiser les colonnes pour placer 'IDS' en premier
+    if 'IDS' and 'SNR' and 'VA' in final_df.columns:
+        cols = ['IDS'] + ['SNR'] + ['VA'] + ['DateTime'] + [col for col in final_df.columns if col != 'IDS' and col != 'SNR' and col != 'VA' and col != 'DateTime']
+        final_df = final_df[cols]
+        
     # Enregistrement du DataFrame fusionné
     final_output_path = os.path.join(parentDir, 'merged_output.csv')
     final_df.to_csv(final_output_path, index=False)
@@ -1320,17 +1329,21 @@ def filtre(csvLineEdit):
     parentDir = os.path.dirname(os.path.abspath(csvLineEdit))
     # Lire le fichier CSV dans un DataFrame
     df = pd.read_csv(csvLineEdit)
-    
+    init_len = len(df['IDS'])
     
     df = df[df['SNR'] != 0]
     df = df[df['geolocation_num_detectedmodes_a1'] != 0]
     df= df[abs(df['digital_elevation_model_srtm'] - df['geolocation_elev_lowestmode_a1']) < 100]
     df= df[(df['rx_sample_count'] - df['rx_processing_a1_search_end']) > 0]
+    final_len = len(df['IDS'])
+    
+    lenght = init_len - final_len 
+
     # Enregistrement du DataFrame fusionné
     final_output_path = os.path.join(parentDir, 'merged_output.csv')
     df.to_csv(final_output_path, index=False)
     # Message de confirmation
-    QMessageBox.information(None, "Process Complete", "File filtered")
+    QMessageBox.information(None, "Process Complete", f"File filtered \n Number of data filtered : {lenght}")
 
 
 def split_csv_on_algo(csvLineEdit):
