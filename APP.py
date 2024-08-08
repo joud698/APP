@@ -54,7 +54,7 @@ def create_main_window():
     utilities_layout = QVBoxLayout()
     utilities_tab.setLayout(utilities_layout)
     
-    open_pdf_button = QPushButton("Open User Manual")
+    open_pdf_button = QPushButton("📄 Open User Manual")
     open_pdf_button.clicked.connect(open_pp_file)
     open_pdf_button.setStyleSheet("""
         QPushButton {
@@ -74,7 +74,7 @@ def create_main_window():
     """)
     utilities_layout.addWidget(open_pdf_button)
 
-    open_google_earth_button = QPushButton("Open Google Earth Pro")
+    open_google_earth_button = QPushButton("🌍 Open Google Earth Pro")
     open_google_earth_button.clicked.connect(open_google_earth)
     open_google_earth_button.setStyleSheet("""
         QPushButton {
@@ -94,7 +94,7 @@ def create_main_window():
     """)
     utilities_layout.addWidget(open_google_earth_button)
     
-    open_gedi_website_button = QPushButton("Open GEDI Data Download Page")
+    open_gedi_website_button = QPushButton("🌐 Open GEDI Data Download Page")
     open_gedi_website_button.clicked.connect(open_gedi_website)
     open_gedi_website_button.setStyleSheet("""
         QPushButton {
@@ -114,7 +114,7 @@ def create_main_window():
     """)
     utilities_layout.addWidget(open_gedi_website_button)
 
-    quit_button = QPushButton("Close")
+    quit_button = QPushButton("❌ Close")
     quit_button.clicked.connect(QApplication.instance().quit)
     quit_button.setStyleSheet("""
         QPushButton {
@@ -186,7 +186,7 @@ def create_main_window():
     """)
     unzip_layout.addWidget(progress_bar)
 
-    quit_button = QPushButton("Close")
+    quit_button = QPushButton("❌ Close")
     quit_button.clicked.connect(QApplication.instance().quit)
     quit_button.setStyleSheet("""
         QPushButton {
@@ -215,7 +215,7 @@ def create_main_window():
     inDirLabel = QLabel("Enter the local directory containing GEDI files to be processed:")
     inDirLayout = QHBoxLayout()  # Create a new layout for the input directory
     inDirLineEdit = QLineEdit()
-    browseDirButton = QPushButton("Browse")
+    browseDirButton = QPushButton("📁 Browse")
     browseDirButton.clicked.connect(lambda: browse_directory(inDirLineEdit))
     browseDirButton.setStyleSheet("""
         QPushButton {
@@ -239,7 +239,7 @@ def create_main_window():
     kmlLabel = QLabel("Select KML file to extract ROI:")
     kmlLayout = QHBoxLayout()  # Create a new layout for the KML selection
     kmlLineEdit = QLineEdit()
-    browseKMLButton = QPushButton("Browse")
+    browseKMLButton = QPushButton("📁 Browse")
     browseKMLButton.clicked.connect(lambda: browse_kml(kmlLineEdit))
     browseKMLButton.setStyleSheet("""
         QPushButton {
@@ -274,7 +274,7 @@ def create_main_window():
     sdsLabel = QLabel("Enter specific science datasets (SDS) to include in the output GeoJSON (optional):")
     sdsLineEdit = QLineEdit()
 
-    processButton = QPushButton("Process Files")
+    processButton = QPushButton("⚙️ Process Files")
     processButton.clicked.connect(lambda: process_files(inDirLineEdit, roiLineEdit, outputFileLineEdit, beamsLineEdit, sdsLineEdit))
     processButton.setStyleSheet("""
         QPushButton {
@@ -296,7 +296,7 @@ def create_main_window():
     outDirLabel = QLabel("Enter the local directory containing CSV files to be merged:")
     outDirLayout = QHBoxLayout()  # Create a new layout for the output directory
     outDirLineEdit = QLineEdit()
-    browseoutButton = QPushButton("Browse")
+    browseoutButton = QPushButton("📁 Browse")
     browseoutButton.clicked.connect(lambda: browse_directory(outDirLineEdit))
     browseoutButton.setStyleSheet("""
         QPushButton {
@@ -317,7 +317,7 @@ def create_main_window():
     outDirLayout.addWidget(outDirLineEdit)
     outDirLayout.addWidget(browseoutButton)
     
-    mergeButton = QPushButton("Merge CSV")
+    mergeButton = QPushButton("🔗 Merge CSV")
     mergeButton.clicked.connect(lambda: merge_csv_on_id(outDirLineEdit.text()))
     mergeButton.setStyleSheet("""
         QPushButton {
@@ -339,7 +339,7 @@ def create_main_window():
     csvLabel = QLabel("Select CSV file to be filtered:")
     csvLayout = QHBoxLayout()  # Create a new layout for the CSV selection
     csvLineEdit = QLineEdit()
-    browseCSVButton = QPushButton("Browse")
+    browseCSVButton = QPushButton("📁 Browse")
     browseCSVButton.clicked.connect(lambda: browse_csv(csvLineEdit))
     browseCSVButton.setStyleSheet("""
         QPushButton {
@@ -360,7 +360,7 @@ def create_main_window():
     csvLayout.addWidget(csvLineEdit)
     csvLayout.addWidget(browseCSVButton)
     
-    filterButton = QPushButton("Filter CSV")
+    filterButton = QPushButton("🔍 Filter CSV")
     filterButton.clicked.connect(lambda: filtre(csvLineEdit.text()))
     filterButton.setStyleSheet("""
         QPushButton {
@@ -382,7 +382,7 @@ def create_main_window():
     csvLabel2 = QLabel("Select CSV file to be split according to algorithms:")
     csvLayout2 = QHBoxLayout()  # Create a new layout for the second CSV selection
     csvLineEdit2 = QLineEdit()
-    browseCSVButton2 = QPushButton("Browse")
+    browseCSVButton2 = QPushButton("📁 Browse")
     browseCSVButton2.clicked.connect(lambda: browse_csv(csvLineEdit2))
     browseCSVButton2.setStyleSheet("""
         QPushButton {
@@ -403,8 +403,9 @@ def create_main_window():
     csvLayout2.addWidget(csvLineEdit2)
     csvLayout2.addWidget(browseCSVButton2)
     
-    splitButton = QPushButton("Split CSV")
+    splitButton = QPushButton("🔀 Split CSV")
     splitButton.clicked.connect(lambda: split_csv_on_algo(csvLineEdit2.text()))
+    splitButton.setProperty('class', 'split-button')
     splitButton.setStyleSheet("""
         QPushButton {
             background: #08c993;
@@ -439,7 +440,7 @@ def create_main_window():
     gedi_layout.addLayout(csvLayout2)  # Add the second CSV selection layout
     gedi_layout.addWidget(splitButton)
     
-    quit_button = QPushButton("Close")
+    quit_button = QPushButton("❌ Close")
     quit_button.clicked.connect(QApplication.instance().quit)
     quit_button.setStyleSheet("""
         QPushButton {
@@ -464,7 +465,7 @@ def create_main_window():
     MAP_tab = QWidget()
     MAP_layout = QVBoxLayout()
     MAP_tab.setLayout(MAP_layout)
-    map_button = QPushButton("Open Map")
+    map_button = QPushButton("🗺️ Open Map")
     map_button.clicked.connect(open_map)
     map_button.setStyleSheet("""
         QPushButton {
@@ -483,7 +484,7 @@ def create_main_window():
         }
     """)
     MAP_layout.addWidget(map_button)
-    quit_button = QPushButton("Close")
+    quit_button = QPushButton("❌ Close")
     quit_button.clicked.connect(QApplication.instance().quit)
     quit_button.setStyleSheet("""
         QPushButton {
