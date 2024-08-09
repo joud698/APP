@@ -25,7 +25,7 @@ from PyQt5.QtCore import Qt, QCoreApplication
 # Définir les attributs d'application nécessaires avant la création de QApplication
 QCoreApplication.setAttribute(Qt.AA_ShareOpenGLContexts)
 
-from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QLineEdit, QPushButton, QLabel, QHBoxLayout, QMessageBox, QFrame
+from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QLineEdit, QPushButton, QLabel, QHBoxLayout, QMessageBox, QFrame,QCheckBox
 from PyQt5.QtWebEngineWidgets import QWebEngineView  # Import après Qt.AA_ShareOpenGLContexts
 from PyQt5.QtGui import QFont
 
@@ -154,17 +154,35 @@ def create_main_window():
     unzip_tab = QWidget()
     unzip_layout = QVBoxLayout()
     unzip_tab.setLayout(unzip_layout)
-
+    
+    # Create a frame to hold the drag and drop label
+    drag_frame = QFrame()
+    drag_frame.setFrameShape(QFrame.Box)
+    drag_frame.setFrameShadow(QFrame.Raised)
+    drag_frame.setLineWidth(2)
+    drag_frame.setStyleSheet("border: 2px dashed #3498db;")
+    
+    # Layout for the drag frame
+    frame_layout = QVBoxLayout()
+    drag_frame.setLayout(frame_layout)
+    
+    # Drag and drop label
     unzip_label = QLabel("Drag and drop zip files here to extract .h5 files:")
     unzip_label.setAlignment(Qt.AlignCenter)
     unzip_label.setFont(QFont('Arial', 12))
     unzip_label.setStyleSheet("font-size: 16px; color: #ecf0f1;")
-    unzip_layout.addWidget(unzip_label)
     
+    # Add the label to the frame layout
+    frame_layout.addWidget(unzip_label)
+    
+    # Add the drag frame to the main layout
+    unzip_layout.addWidget(drag_frame)
+    
+    # Drag and drop events
     def drag_enter_event(event):
-       if event.mimeData().hasUrls():
-           event.acceptProposedAction()
-
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+    
     def drop_event(event, label):
         urls = event.mimeData().urls()
         if urls:
@@ -173,14 +191,12 @@ def create_main_window():
                 label.setText(f"File dropped: {file_path}")
                 if file_path.endswith('.zip'):
                     extract_h5_from_zip(file_path, label, progress_bar)
- 
+    
     central_widget.dragEnterEvent = lambda event: drag_enter_event(event)
     central_widget.dropEvent = lambda event: drop_event(event, unzip_label)
     central_widget.setAcceptDrops(True)
-
-    tab_widget.addTab(unzip_tab, "Drag and Drop Unzipper")
-
     
+    # Progress bar
     progress_bar = QProgressBar()
     progress_bar.setRange(0, 100)
     progress_bar.setValue(0)
@@ -200,7 +216,8 @@ def create_main_window():
         }
     """)
     unzip_layout.addWidget(progress_bar)
-
+    
+    # Quit button
     quit_button = QPushButton("❌ Close")
     quit_button.clicked.connect(QApplication.instance().quit)
     quit_button.setStyleSheet("""
@@ -220,13 +237,22 @@ def create_main_window():
         }
     """)
     unzip_layout.addWidget(quit_button)
-    tab_widget.addTab(unzip_tab, "Drag and Drop Unzipper")
-
-    # Tab for GEDI Data Processor
-    gedi_tab = QWidget()
-    gedi_layout = QVBoxLayout()
-    gedi_tab.setLayout(gedi_layout)
     
+    # Add the tab to the tab widget
+    tab_widget.addTab(unzip_tab, "DRAG AND DROP UNZIPPER")
+    
+    
+    
+    
+    
+
+    # Tab for GEDI DATA GENERATOR
+    # Create the main widget and layout
+    gen_tab = QWidget()
+    gen_layout = QVBoxLayout()
+    gen_tab.setLayout(gen_layout)
+    
+    # Input Directory
     inDirLabel = QLabel("Enter the local directory containing GEDI files to be processed:")
     inDirLayout = QHBoxLayout()  # Create a new layout for the input directory
     inDirLineEdit = QLineEdit()
@@ -251,6 +277,7 @@ def create_main_window():
     inDirLayout.addWidget(inDirLineEdit)
     inDirLayout.addWidget(browseDirButton)
     
+    # KML File Selection
     kmlLabel = QLabel("Select KML file to extract ROI:")
     kmlLayout = QHBoxLayout()  # Create a new layout for the KML selection
     kmlLineEdit = QLineEdit()
@@ -274,23 +301,37 @@ def create_main_window():
     """)
     kmlLayout.addWidget(kmlLineEdit)
     kmlLayout.addWidget(browseKMLButton)
-
-    global roiLineEdit
+    
+    # Region of Interest
     roiLabel = QLabel("Region of interest (ROI) extracted:")
     roiLineEdit = QLineEdit()
     roiLineEdit.setReadOnly(True)
     line_edit_refs['roi'] = roiLineEdit 
     
+    # Output File
     outputFileLineEdit = "out.h5"
-
+    
+    # Beams Input
     beamsLabel = QLabel("Enter specific beams to be included in the output GeoJSON (optional, default is all beams):")
     beamsLineEdit = QLineEdit()
-
+    
+    # Science Datasets Input
     sdsLabel = QLabel("Enter specific science datasets (SDS) to include in the output GeoJSON (optional):")
     sdsLineEdit = QLineEdit()
-
+    
+    # Algorithm Selection Checkboxes
+    algoLabel = QLabel("Select algorithms to be used:")
+    algoLayout = QHBoxLayout()  # Create a new layout for the algorithms checkboxes
+    algoCheckboxes = []
+    algorithms = ["a1", "a2", "a3", "a4", "a5", "a6"]
+    for algo in algorithms:
+        checkbox = QCheckBox(algo)
+        algoLayout.addWidget(checkbox)
+        algoCheckboxes.append(checkbox)
+    
+    # Process Button
     processButton = QPushButton("⚙️ Process Files")
-    processButton.clicked.connect(lambda: process_files(inDirLineEdit, roiLineEdit, outputFileLineEdit, beamsLineEdit, sdsLineEdit))
+    processButton.clicked.connect(lambda: process_files(inDirLineEdit, roiLineEdit, outputFileLineEdit, beamsLineEdit, sdsLineEdit, algoCheckboxes))
     processButton.setStyleSheet("""
         QPushButton {
             background: #08c993;
@@ -307,6 +348,33 @@ def create_main_window():
             background: #0a9f6a;
         }
     """)
+    
+    # Add widgets to the layout
+    gen_layout.addWidget(inDirLabel)
+    gen_layout.addLayout(inDirLayout)  # Add the input directory layout
+    gen_layout.addWidget(kmlLabel)
+    gen_layout.addLayout(kmlLayout)  # Add the KML selection layout
+    gen_layout.addWidget(roiLabel)
+    gen_layout.addWidget(roiLineEdit)
+    gen_layout.addWidget(beamsLabel)
+    gen_layout.addWidget(beamsLineEdit)
+    gen_layout.addWidget(sdsLabel)
+    gen_layout.addWidget(sdsLineEdit)
+    gen_layout.addWidget(algoLabel)
+    gen_layout.addLayout(algoLayout)  # Add the algorithms layout
+    gen_layout.addWidget(processButton)
+    
+    # Add the quit button if it exists
+    gen_layout.addWidget(quit_button)
+    
+    # Add the tab to the tab widget and layout
+    tab_widget.addTab(gen_tab, "GEDI DATA GENERATOR")
+    layout.addWidget(tab_widget)
+        
+    # Tab for GEDI Data Processor
+    gedi_tab = QWidget()
+    gedi_layout = QVBoxLayout()
+    gedi_tab.setLayout(gedi_layout)
     
     outDirLabel = QLabel("Enter the local directory containing CSV files to be merged:")
     outDirLayout = QHBoxLayout()  # Create a new layout for the output directory
@@ -438,13 +506,7 @@ def create_main_window():
         }
     """)
     
-    gedi_layout.addWidget(inDirLabel)
-    gedi_layout.addLayout(inDirLayout)  # Add the input directory layout
-    gedi_layout.addWidget(kmlLabel)
-    gedi_layout.addLayout(kmlLayout)  # Add the KML selection layout
-    gedi_layout.addWidget(sdsLabel)
-    gedi_layout.addWidget(sdsLineEdit)
-    gedi_layout.addWidget(processButton)
+
     gedi_layout.addWidget(outDirLabel)
     gedi_layout.addLayout(outDirLayout)  # Add the output directory layout
     gedi_layout.addWidget(mergeButton)
@@ -474,7 +536,12 @@ def create_main_window():
         }
     """)
     gedi_layout.addWidget(quit_button)
-    tab_widget.addTab(gedi_tab, "GEDI Data Processor")
+    tab_widget.addTab(gedi_tab, "GEDI DATA PROCESSOR")
+    
+    
+    
+    
+    
     
     # Tab for MAP
     MAP_tab = QWidget()
