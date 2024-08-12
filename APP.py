@@ -312,8 +312,8 @@ def create_main_window():
     outputFileLineEdit = "out.h5"
     
     # Beams Input
-    beamsLabel = QLabel("Enter specific beams to be included in the output GeoJSON (optional, default is all beams):")
-    beamsLineEdit = QLineEdit()
+    # beamsLabel = QLabel("Enter specific beams to be included in the output GeoJSON (optional, default is all beams):")
+    # beamsLineEdit = QLineEdit()
     
     # Science Datasets Input
     sdsLabel = QLabel("Enter specific science datasets (SDS) to include in the output GeoJSON (optional):")
@@ -331,7 +331,7 @@ def create_main_window():
     
     # Process Button
     processButton = QPushButton("⚙️ Process Files")
-    processButton.clicked.connect(lambda: process_files(inDirLineEdit, roiLineEdit, outputFileLineEdit, beamsLineEdit, sdsLineEdit, algoCheckboxes))
+    processButton.clicked.connect(lambda: process_files(inDirLineEdit, roiLineEdit, outputFileLineEdit, sdsLineEdit, algoCheckboxes))
     processButton.setStyleSheet("""
         QPushButton {
             background: #08c993;
@@ -356,8 +356,8 @@ def create_main_window():
     gen_layout.addLayout(kmlLayout)  # Add the KML selection layout
     gen_layout.addWidget(roiLabel)
     gen_layout.addWidget(roiLineEdit)
-    gen_layout.addWidget(beamsLabel)
-    gen_layout.addWidget(beamsLineEdit)
+    # gen_layout.addWidget(beamsLabel)
+    # gen_layout.addWidget(beamsLineEdit)
     gen_layout.addWidget(sdsLabel)
     gen_layout.addWidget(sdsLineEdit)
     gen_layout.addWidget(algoLabel)
@@ -746,15 +746,26 @@ def extract_roi_from_kml(kml_file, roiLineEdit):
         roiLineEdit.setText(roi)
 
 #%% GENERATE OUTPUT.H5
-def process_files(inDirLineEdit, roiLineEdit, outputFileLineEdit, beamsLineEdit, sdsLineEdit):
+def process_files(inDirLineEdit, roiLineEdit, outputFileLineEdit, sdsLineEdit, algoCheckboxes):
+    
 
+    selected_algorithms = []
+    exclusion_algo = ["a1", "a2", "a3", "a4", "a5", "a6"]
+    for checkbox in algoCheckboxes:
+        if checkbox.isChecked():
+            selected_algorithms.append(checkbox.text())
+            exclusion_algo.remove(checkbox.text()) 
+    
+
+    
+    
 
     global inDir
     inDir = inDirLineEdit.text()
     roi_input = roiLineEdit.text()
     #output_file = outputFileLineEdit.text()
     output_file = "out.h5"
-    beams_input = beamsLineEdit.text()
+    beams_input = None
     sds_input = sdsLineEdit.text()
 
     if not inDir or not roi_input or not output_file:
@@ -828,7 +839,7 @@ def process_files(inDirLineEdit, roiLineEdit, outputFileLineEdit, beamsLineEdit,
 
     output_hdf5_file = os.path.join(parentDir, output_file)
     write_to_hdf5(output_hdf5_file, merged_data)
-    csv()
+    csv(exclusion_algo)
     progress_dialog.close()
 
 
@@ -1071,11 +1082,14 @@ def VA(lon1, lat1, lon2, lat2, altitude):
     return np.rad2deg(math.atan(distance / altitude))
 
 #%% GENERATE CSV    
-def csv():
+def csv(exclusion_algo):
     
     
+    print("excluded algorithms:", exclusion_algo)
     
 
+        
+        
     # --------------------DEFINE PRESET BAND/LAYER SUBSETS ------------------------------------------ #
     # Default layers to be subset and exported, see README for information on how to add additional layers
     l1bSubset = ['/geolocation/latitude_bin0', '/geolocation/longitude_bin0', '/channel', '/shot_number',
@@ -1138,6 +1152,24 @@ def csv():
     '/rx_processing/rx_energy_a6', '/geolocation/latitude_bin0_a6', '/geolocation/longitude_bin0_a6'
     ]   
      
+    
+    # --------------------------------------FILTER--------------------------------------------- #  
+    for i in range(len(exclusion_algo)) : 
+        l1bSubset = [ j for j in l1bSubset if exclusion_algo[i] not in j ]
+        l2aSubset = [ j for j in l2aSubset if exclusion_algo[i] not in j ]
+        l2bSubset = [ j for j in l2bSubset if exclusion_algo[i] not in j ]
+        
+        
+        
+    
+                      
+    # ----------------------------------------------------------------------------------------- # 
+    
+    
+    
+    
+    
+    
     # -------------------IMPORT GEDI FILES AS GEODATAFRAMES AND CLIP TO ROI-------------------------- #   
     # Loop through each GEDI file and export as a point geojson
     l = 0
