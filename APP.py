@@ -1476,8 +1476,19 @@ def split_csv_on_algo(csvLineEdit):
     # Lire le fichier CSV dans un DataFrame
     df = pd.read_csv(csvLineEdit)
     
-    # Liste des motifs de mots-clés
-    keywords = ['a1', 'a2', 'a3', 'a4', 'a5', 'a6']
+    test = ['geolocation_lon_lowestmode_a1','geolocation_lon_lowestmode_a2','geolocation_lon_lowestmode_a3',
+            'geolocation_lon_lowestmode_a4','geolocation_lon_lowestmode_a5','geolocation_lon_lowestmode_a6']
+    
+    
+    keywords = []
+    key = ['a1', 'a2', 'a3', 'a4', 'a5', 'a6']
+    for i in range(len(test)) : 
+            
+        if test[i] in df.columns:
+            keywords.append(key[i])
+        
+
+   
     
     for keyword in keywords:
         # Construire le motif d'exclusion pour le fichier courant
@@ -1510,7 +1521,12 @@ def split_csv_on_algo(csvLineEdit):
             output_file = os.path.join(algo_folder, f"{keyword}_{chunk_number + 1}.csv")
             df_chunk.to_csv(output_file, index=False, sep=';', encoding='utf-8-sig')
             print(f"Fichier {output_file} créé avec succès.")
-    
+            
+    keywords = ' // '.join(keywords)    
+    print(keywords)
+    # Message de confirmation
+    QMessageBox.information(None, f"Process Completed", f"File splited into algo : {keywords}  ")
+   
 #%% OPEN MAP 
 def open_map():
     MAP.MAIN()
