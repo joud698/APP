@@ -1429,7 +1429,8 @@ def merge_csv_on_id(output_dir):
         
     # Enregistrement du DataFrame fusionné
     final_output_path = os.path.join(parentDir, 'merged_output.csv')
-    final_df.to_csv(final_output_path, index=False)
+
+    final_df.to_csv(final_output_path, index=False, sep=';', encoding='utf-8-sig')
     
     # Mise à jour finale de la barre de progression et du label
     progress_bar.setValue(total_files)
@@ -1520,10 +1521,10 @@ def split_csv_on_algo(csvLineEdit):
             # Déterminer le nom du fichier de sortie avec suffixe _1, _2, etc.
             output_file = os.path.join(algo_folder, f"{keyword}_{chunk_number + 1}.csv")
             df_chunk.to_csv(output_file, index=False, sep=';', encoding='utf-8-sig')
-            print(f"Fichier {output_file} créé avec succès.")
+            # print(f"Fichier {output_file} créé avec succès.")
             
     keywords = ' // '.join(keywords)    
-    print(keywords)
+
     # Message de confirmation
     QMessageBox.information(None, f"Process Completed", f"File splited into algo : {keywords}  ")
    
