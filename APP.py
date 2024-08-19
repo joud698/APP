@@ -13,7 +13,7 @@ import numpy as np
 import warnings
 from PyQt5.QtWidgets import QDialog,QApplication, QMainWindow, QLabel, QVBoxLayout,QGridLayout, QWidget, QLineEdit, QPushButton, QFileDialog, QMessageBox, QTabWidget, QProgressBar,  QPlainTextEdit
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QIcon
 from fastkml import kml
 import platform
 import webbrowser
@@ -21,6 +21,7 @@ warnings.filterwarnings("ignore")
 import subprocess
 import glob
 import re
+
 from PyQt5.QtCore import Qt, QCoreApplication
 # Définir les attributs d'application nécessaires avant la création de QApplication
 QCoreApplication.setAttribute(Qt.AA_ShareOpenGLContexts)
@@ -843,7 +844,7 @@ def process_files(inDirLineEdit, roiLineEdit, outputFileLineEdit, sdsLineEdit, a
     progress_dialog.close()
 
 
-    QMessageBox.information(None, "Process Complete", f"Merged HDF5 file created at: {output_hdf5_file}")
+    QMessageBox.information(None, "Process Completed", f"Merged HDF5 file created at: {output_hdf5_file}")
 
 def merge_data(files, beams=None, sds=None):
     merged_data = {
@@ -1395,7 +1396,7 @@ def merge_csv_on_id(output_dir):
                     
     # Récupération des colonnes nécessaires
     if all(col in final_df.columns for col in [
-        'rx_processing_a1_mean', 'rx_processing_a1_stddev', 'rx_processing_a1_rx_modeamps',
+        'rx_processing_a1_mean', 'rx_processing_a1_stddev', 'rx_processing_a1_rx_modeamps_0',
         'geolocation_longitude_bin0', 'geolocation_latitude_bin0',
         'geolocation_longitude_instrument', 'geolocation_latitude_instrument',
         'geolocation_altitude_instrument']):
@@ -1407,6 +1408,7 @@ def merge_csv_on_id(output_dir):
         lon2 = final_df['geolocation_longitude_instrument']
         lat2 = final_df['geolocation_latitude_instrument']
         altitude_i = final_df['geolocation_altitude_instrument']
+        
         
         # Extraction des colonnes rx_modeamps
         amp_columns = [col for col in final_df.columns if col.startswith('rx_processing_a1_rx_modeamps_')]
@@ -1421,7 +1423,8 @@ def merge_csv_on_id(output_dir):
         
         # Calcul du Datetime
         final_df['DateTime'] = final_df['delta_time'].apply(lambda x: (datetime(2018, 1, 1, 0, 0, 0) + timedelta(seconds=x)) if not pd.isna(x) else pd.NaT)
-        
+    else :
+        print("non")
     # Réorganiser les colonnes pour placer 'IDS' en premier
     if 'IDS' and 'SNR' and 'VA' in final_df.columns:
         cols = ['IDS'] + ['SNR'] + ['VA'] + ['DateTime'] + [col for col in final_df.columns if col != 'IDS' and col != 'SNR' and col != 'VA' and col != 'DateTime']
@@ -1430,18 +1433,18 @@ def merge_csv_on_id(output_dir):
     # Enregistrement du DataFrame fusionné
     final_output_path = os.path.join(parentDir, 'merged_output.csv')
 
-    final_df.to_csv(final_output_path, index=False, sep=';', encoding='utf-8-sig')
-    
+    # final_df.to_csv(final_output_path, index=False, sep=';', encoding='utf-8-sig')
+    final_df.to_csv(final_output_path, index=False)
     # Mise à jour finale de la barre de progression et du label
     progress_bar.setValue(total_files)
-    label.setText(f"Process complete. File saved to: {final_output_path}")
+    label.setText(f"Process completed. File saved to: {final_output_path}")
     
     # Fermeture de la boîte de dialogue après un court délai
     QApplication.processEvents()
     progress_dialog.close()
     
     # Message de confirmation
-    QMessageBox.information(None, "Process Complete", f"Merged CSV file created at: {final_output_path}")
+    QMessageBox.information(None, "Process Completed", f"Merged CSV file created at: {final_output_path}")
 
  
 # filter CSV file according to SNR
@@ -1466,7 +1469,7 @@ def filtre(csvLineEdit):
     final_output_path = os.path.join(parentDir, 'merged_output.csv')
     df.to_csv(final_output_path, index=False)
     # Message de confirmation
-    QMessageBox.information(None, "Process Complete", f"File filtered \n Number of data filtered : {lenght}")
+    QMessageBox.information(None, "Process Completed", f"File filtered \n Number of data filtered : {lenght}")
 
 
 def split_csv_on_algo(csvLineEdit):
@@ -1481,52 +1484,53 @@ def split_csv_on_algo(csvLineEdit):
             'geolocation_lon_lowestmode_a4','geolocation_lon_lowestmode_a5','geolocation_lon_lowestmode_a6']
     
     
-    keywords = []
-    key = ['a1', 'a2', 'a3', 'a4', 'a5', 'a6']
+    selected = []
+    keywords = ['a1', 'a2', 'a3', 'a4', 'a5', 'a6']
     for i in range(len(test)) : 
             
         if test[i] in df.columns:
-            keywords.append(key[i])
+            selected.append(keywords[i])
         
 
    
     
     for keyword in keywords:
-        # Construire le motif d'exclusion pour le fichier courant
-        exclusion_keywords = [kw for kw in keywords if kw != keyword]
-        pattern = '|'.join([re.escape(kw) for kw in exclusion_keywords])
-        
-        # Sélectionner les colonnes qui ne contiennent pas les mots-clés d'exclusion
-        selected_columns = [col for col in df.columns if not re.search(pattern, col)]
-        
-        # Extraire les données filtrées
-        df_filtered = df[selected_columns]
-        
-        # Créer un dossier pour chaque algorithme (a1, a2, ...)
-        algo_folder = os.path.join(parentDir, keyword)
-        os.makedirs(algo_folder, exist_ok=True)
-        
-        
-        # Diviser en paquets 
-        TAILLE_MAX = 200
-        num_chunks = (len(df_filtered) // TAILLE_MAX) + 1
-        
-        for chunk_number in range(num_chunks):
-            start_row = chunk_number * TAILLE_MAX
-            end_row = (chunk_number + 1) * TAILLE_MAX
+        if keyword in selected : 
+            # Construire le motif d'exclusion pour le fichier courant
+            exclusion_keywords = [kw for kw in keywords if kw != keyword]
+            pattern = '|'.join([re.escape(kw) for kw in exclusion_keywords])
             
-            # Extraire le sous-ensemble de données
-            df_chunk = df_filtered[start_row:end_row]
+            # Sélectionner les colonnes qui ne contiennent pas les mots-clés d'exclusion
+            selected_columns = [col for col in df.columns if not re.search(pattern, col)]
             
-            # Déterminer le nom du fichier de sortie avec suffixe _1, _2, etc.
-            output_file = os.path.join(algo_folder, f"{keyword}_{chunk_number + 1}.csv")
-            df_chunk.to_csv(output_file, index=False, sep=';', encoding='utf-8-sig')
-            # print(f"Fichier {output_file} créé avec succès.")
+            # Extraire les données filtrées
+            df_filtered = df[selected_columns]
             
-    keywords = ' // '.join(keywords)    
+            # Créer un dossier pour chaque algorithme (a1, a2, ...)
+            algo_folder = os.path.join(parentDir, keyword)
+            os.makedirs(algo_folder, exist_ok=True)
+            
+            
+            # Diviser en paquets 
+            TAILLE_MAX = 10**5
+            num_chunks = (len(df_filtered) // TAILLE_MAX) + 1
+            
+            for chunk_number in range(num_chunks):
+                start_row = chunk_number * TAILLE_MAX
+                end_row = (chunk_number + 1) * TAILLE_MAX
+                
+                # Extraire le sous-ensemble de données
+                df_chunk = df_filtered[start_row:end_row]
+                
+                # Déterminer le nom du fichier de sortie avec suffixe _1, _2, etc.
+                output_file = os.path.join(algo_folder, f"{keyword}_{chunk_number + 1}.csv")
+                df_chunk.to_csv(output_file, index=False, sep=';', encoding='utf-8-sig')
+                # print(f"Fichier {output_file} créé avec succès.")
+            
+    selected = ' // '.join(selected)    
 
     # Message de confirmation
-    QMessageBox.information(None, f"Process Completed", f"File splited into algo : {keywords}  ")
+    QMessageBox.information(None, f"Process Completed", f"File splited into algo : {selected}  ")
    
 #%% OPEN MAP 
 def open_map():
@@ -1535,7 +1539,13 @@ def open_map():
 #%% MAIN             
 def main():
     app = QApplication(sys.argv)
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    
+    file_PATH = os.path.join(script_dir, "icone.ico")
+    app.setWindowIcon(QIcon(file_PATH))
     main_window = create_main_window()
+    main_window.setWindowIcon(QIcon(file_PATH))
     
     main_window.show()
     sys.exit(app.exec_())
