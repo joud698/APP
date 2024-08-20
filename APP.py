@@ -21,7 +21,7 @@ warnings.filterwarnings("ignore")
 import subprocess
 import glob
 import re
-
+import time
 from PyQt5.QtCore import Qt, QCoreApplication
 # Définir les attributs d'application nécessaires avant la création de QApplication
 QCoreApplication.setAttribute(Qt.AA_ShareOpenGLContexts)
@@ -29,7 +29,7 @@ QCoreApplication.setAttribute(Qt.AA_ShareOpenGLContexts)
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QLineEdit, QPushButton, QLabel, QHBoxLayout, QMessageBox, QFrame,QCheckBox
 from PyQt5.QtWebEngineWidgets import QWebEngineView  # Import après Qt.AA_ShareOpenGLContexts
 from PyQt5.QtGui import QFont
-
+from threading import Thread
 import matplotlib.pyplot as plt 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import folium
@@ -815,7 +815,6 @@ def process_files(inDirLineEdit, roiLineEdit, outputFileLineEdit, sdsLineEdit, a
         os.makedirs(outDir)
 
     gediFiles = [o for o in os.listdir() if o.endswith('.h5') and 'GEDI' in o]
-    
     # Création de la boîte de dialogue avec une barre de chargement
     progress_dialog = QDialog()
     progress_dialog.setWindowTitle("Processing Files")
@@ -827,6 +826,7 @@ def process_files(inDirLineEdit, roiLineEdit, outputFileLineEdit, sdsLineEdit, a
     # Traitement des fichiers avec une barre de chargement
     total_files = len(gediFiles)
     progress_bar.setMaximum(total_files)
+    
     for i, file in enumerate(gediFiles):
         # Votre fonction de fusion des données ici
         merged_data = merge_data([file], beams=beamSubset, sds=layerSubset)
@@ -1127,12 +1127,21 @@ def VA(lon1, lat1, lon2, lat2, altitude):
     return np.rad2deg(math.atan(distance / altitude))
 
 #%% GENERATE CSV    
+
+def show_progress_message(num_files_processed, total_files):
+    """Affiche une boîte de dialogue indiquant la progression en utilisant PyQt."""
+    app = QApplication([])  # Crée une application PyQt (nécessaire pour les dialogues)
+    
+    # Crée une boîte de message pour afficher la progression
+    message = f"Fichiers générés : {num_files_processed}/{total_files}"
+    msgBox = QMessageBox()
+    msgBox.setIcon(QMessageBox.Information)
+    msgBox.setText(message)
+    msgBox.setWindowTitle("Progression")
+    msgBox.exec_()    
+    
 def csv(exclusion_algo):
     
-    
-
-    
-
         
         
     # --------------------DEFINE PRESET BAND/LAYER SUBSETS ------------------------------------------ #
@@ -1220,6 +1229,28 @@ def csv(exclusion_algo):
     l = 0
     # Create list of GEDI HDF-EOS5 files in the directory
     gediFiles = [o for o in os.listdir() if o.endswith('.h5') and 'GEDI' in o]
+    total_files = len(gediFiles)  # Nombre total de fichiers à traiter
+    
+    # Import GEDI files and set up PyQt application
+    bar = QApplication([])
+    
+    # Create a main window and set up a progress bar
+    window = QMainWindow()
+    window.setWindowTitle("Progress")
+    window.setGeometry(100, 100, 300, 100)  # (x, y, width, height)
+    
+    progress_dialog = QDialog()
+    progress_dialog.setWindowTitle("Processing Files")
+    layout = QVBoxLayout(progress_dialog)
+    
+    progress_bar = QProgressBar()
+    layout.addWidget(progress_bar)
+    progress_label = QLabel()
+    layout.addWidget(progress_label)
+    layout.addWidget(progress_bar)
+    progress_dialog.show()
+    progress_bar.setMaximum(total_files)
+  
     for g in gediFiles:
         l += 1
         # print(f"Processing file: {g} ({l}/{len(gediFiles)})")
@@ -1392,9 +1423,12 @@ def csv(exclusion_algo):
             # print(f"{g.replace('.h5', '.csv')} saved at: {outDir}")
         except ValueError:
             print(f"{g} intersects the bounding box of the input ROI, but no shots intersect final clipped ROI.")
-
-
-
+        # Update progress bar
+        progress_bar.setValue(l)
+        progress_label.setText(f".csv files generated : {l}/{total_files}")
+        QApplication.processEvents()  # Permet à l'interface de se mettre à jour
+   
+    
 # Merge all CSV et ajout de VA et SNR
 def merge_csv_on_id(output_dir):
     parentDir = os.path.dirname(os.path.abspath(output_dir))
@@ -1483,12 +1517,16 @@ def merge_csv_on_id(output_dir):
     progress_bar.setValue(total_files)
     label.setText(f"Process completed. File saved to: {final_output_path}")
     
+    # Lire le fichier CSV pour obtenir le nombre de lignes et de colonnes
+    merged_df = pd.read_csv(final_output_path, sep=';', encoding='utf-8-sig')
+    num_rows, num_cols = merged_df.shape
+
     # Fermeture de la boîte de dialogue après un court délai
     QApplication.processEvents()
     progress_dialog.close()
     
     # Message de confirmation
-    QMessageBox.information(None, "Process Completed", f"Merged CSV file created at: {final_output_path}")
+    QMessageBox.information(None, "Process Completed", f"Merged CSV file created at: {final_output_path}\nNumber of rows: {num_rows}\nNumber of columns: {num_cols}")
 
  
 # filter CSV file according to SNR
@@ -1532,7 +1570,7 @@ def filtre(csvLineEdit):
                 (snr != 0) &
                 (geolocation_num_detectedmodes_a1 != 0) &
                 (abs(dem_srtm - elev_lowestmode_a1) < 100) &
-                ((rx_sample_count[:len(rx_sample_count)] - rx_processing_a1_search_end) > 0)
+                ((rx_sample_count[:len(rx_sample_count)-1] - rx_processing_a1_search_end) > 0)
             )[0]
 
             df_group = h5file['df']
@@ -1545,8 +1583,12 @@ def filtre(csvLineEdit):
                 del df_group[dataset_name]
                 # Ajout du dataset filtré
                 df_group.create_dataset(dataset_name, data=filtered_dataset)
-    
-    QMessageBox.information(None, "Process Completed", f"File filtered \n Number of data filtered : {lenght}")
+                
+    # Lire le fichier CSV pour obtenir le nombre de lignes et de colonnes
+    merged_df = pd.read_csv(final_output_path, sep=';', encoding='utf-8-sig')
+    num_rows, num_cols = merged_df.shape
+
+    QMessageBox.information(None, "Process Completed", f"File filtered \n Number of data filtered : {lenght}\nNumber of rows: {num_rows}\nNumber of columns: {num_cols}")
 
 
 def split_csv_on_algo(csvLineEdit):
