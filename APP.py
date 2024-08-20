@@ -240,7 +240,7 @@ def create_main_window():
     unzip_layout.addWidget(quit_button)
     
     # Add the tab to the tab widget
-    tab_widget.addTab(unzip_tab, "DRAG AND DROP UNZIPPER")
+    tab_widget.addTab(unzip_tab, "UNZIPPER")
     
     
     
@@ -254,7 +254,7 @@ def create_main_window():
     gen_tab.setLayout(gen_layout)
     
     # Input Directory
-    inDirLabel = QLabel("Enter the local directory containing GEDI files to be processed:")
+    inDirLabel = QLabel("Enter the local directory containing GEDI .h5 files to be processed:")
     inDirLayout = QHBoxLayout()  # Create a new layout for the input directory
     inDirLineEdit = QLineEdit()
     browseDirButton = QPushButton("📁 Browse")
@@ -317,7 +317,7 @@ def create_main_window():
     # beamsLineEdit = QLineEdit()
     
     # Science Datasets Input
-    sdsLabel = QLabel("Enter specific science datasets (SDS) to include in the output GeoJSON (optional):")
+    sdsLabel = QLabel("Enter specific science datasets (SDS) to include in the output .csv file (optional):")
     sdsLineEdit = QLineEdit()
     
     # Algorithm Selection Checkboxes
@@ -369,7 +369,7 @@ def create_main_window():
     gen_layout.addWidget(quit_button)
     
     # Add the tab to the tab widget and layout
-    tab_widget.addTab(gen_tab, "GEDI DATA GENERATOR")
+    tab_widget.addTab(gen_tab, "GEDI DATA EXTRACTOR")
     layout.addWidget(tab_widget)
         
     # Tab for GEDI Data Processor
@@ -864,7 +864,12 @@ def merge_data(files, beams=None, sds=None):
         'longitude_instrument': [],
         'latitude_instrument': [],
         'altitude_instrument': [],
-        'VA': []
+        'VA': [],
+        'digital_elevation_model_srtm': [],
+        'num_detectedmodes_a1': [],
+        'elev_lowestmode_a1': [],
+        'rx_sample_count': [],
+        'search_end': []
         }
     
     if sds:
@@ -877,18 +882,24 @@ def merge_data(files, beams=None, sds=None):
         # print_h5_structure(file)
         file_data = process_file(file, beams, sds)
 
-        for key, values in file_data.items():
-            if key == 'rxwaveform':
-                if key not in merged_data:
-                    merged_data[key] = []
-                merged_data[key].extend(values)
-        lent = len(merged_data['rxwaveform'])        
+        # for key, values in file_data.items():
+        #     if key == 'rxwaveform':
+        #         if key not in merged_data:
+        #             merged_data[key] = []
+        #         merged_data[key].extend(values)
+        # lent = len(merged_data['rxwaveform'])        
         for key, values in file_data.items():
            
             if key not in merged_data:
                 merged_data[key] = []
             merged_data[key].extend(values[:])
-            
+          
+        
+       
+        
+        merged_data['rxwaveform'] = merged_data['rxwaveform'][:]    
+        lent = len(merged_data['rxwaveform'])
+
         merged_data['shot_number'] = merged_data['shot_number'][:lent]     
         merged_data['IDS'] = merged_data['IDS'][:lent] 
         merged_data['lat_lowestmode'] = merged_data['lat_lowestmode'][:lent] 
@@ -904,8 +915,12 @@ def merge_data(files, beams=None, sds=None):
         merged_data['longitude_instrument'] = merged_data['longitude_instrument'][:lent] 
         merged_data['latitude_instrument'] = merged_data['latitude_instrument'][:lent] 
         merged_data['altitude_instrument'] = merged_data['altitude_instrument'][:lent] 
-        merged_data['VA'] = merged_data['VA'][:lent] 
-        
+        merged_data['num_detectedmodes_a1'] = merged_data['num_detectedmodes_a1'][:lent] 
+        merged_data['elev_lowestmode_a1'] = merged_data['elev_lowestmode_a1'][:lent] 
+        merged_data['rx_sample_count'] = merged_data['rx_sample_count'][:lent] 
+        merged_data['search_end'] = merged_data['search_end'][:lent] 
+        merged_data['digital_elevation_model_srtm'] = merged_data['digital_elevation_model_srtm'][:lent] 
+   
     return merged_data
 
 
@@ -928,7 +943,12 @@ def process_file(file_path, beams=None, sds=None):
             'longitude_instrument': [],
             'latitude_instrument': [],
             'altitude_instrument': [],
-            'VA': []
+            'VA': [],
+            'digital_elevation_model_srtm': [],
+            'num_detectedmodes_a1': [],
+            'elev_lowestmode_a1': [],
+            'rx_sample_count': [],
+            'search_end': []
             }
         
         if sds:
@@ -945,6 +965,14 @@ def process_file(file_path, beams=None, sds=None):
             ids = create_ids(shot_numbers)
             data['shot_number'].extend(shot_numbers)
             data['IDS'].extend(ids)
+            
+            if 'digital_elevation_model_srtm' in f[beam]:
+                z = f[beam]['digital_elevation_model_srtm'][:]
+                data['digital_elevation_model_srtm'].extend(z)       
+            if 'rx_sample_count' in f[beam]:
+                z = f[beam]['rx_sample_count'][:]
+                data['rx_sample_count'].extend(z) 
+                
             if 'lon_lowestmode' in f[beam]:
                 lon_lm = f[beam]["lon_lowestmode"][:]
                 data['lon_lowestmode'].extend(lon_lm)
@@ -979,8 +1007,9 @@ def process_file(file_path, beams=None, sds=None):
 
             if 'altitude_instrument' in f[beam]['geolocation']:
                 altitude_instrument = f[beam]['geolocation']["altitude_instrument"][:]
-                data['altitude_instrument'].extend(altitude_instrument)                
-                
+                data['altitude_instrument'].extend(altitude_instrument)     
+        
+        
                 lon1 = longitude_bin0
                 lat1 = latitude_bin0
                 lon2 = longitude_instrument
@@ -988,8 +1017,14 @@ def process_file(file_path, beams=None, sds=None):
                 altitude_i =  altitude_instrument
                 VA_metric = [VA(lo1,la1,lo2,la2,al) for lo1,la1,lo2,la2,al in zip(lon1,lat1,lon2,lat2,altitude_i)]
                 data['VA'].extend(VA_metric)
+                
             
             if 'rx_processing_a1' in f[beam]:
+                
+                if 'search_end' in f[beam]['rx_processing_a1']:
+                    z = f[beam]['rx_processing_a1']['search_end'][:]
+                    data['search_end'].extend(z) 
+                    
                 if 'mean' in f[beam]['rx_processing_a1']:
                     mean = f[beam]['rx_processing_a1']["mean"][:]
                     data['mean'].extend(mean)
@@ -1007,8 +1042,16 @@ def process_file(file_path, beams=None, sds=None):
                     SNR = calculate_SNR(rx_modeamps,mean,stddev)   #SNR
                     data['SNR'].extend(SNR)
                 
-       
-            
+                
+            if 'geolocation' in f[beam]:
+               if 'num_detectedmodes_a1' in f[beam]['geolocation']:
+                   a = f[beam]['geolocation']['num_detectedmodes_a1'][:]
+                   data['num_detectedmodes_a1'].extend(a) 
+               if 'elev_lowestmode_a1' in f[beam]['geolocation']:
+                   z = f[beam]['geolocation']['elev_lowestmode_a1'][:]
+                   data['elev_lowestmode_a1'].extend(z) 
+                       
+                
             if sds:
                 for dataset in sds:
                     if dataset in f[beam]:
@@ -1041,7 +1084,8 @@ def write_to_hdf5(output_file, data):
         df_group = f.create_group('df')
         for key, values in data.items():
             # print(f"Writing dataset {key} with {len(values)} items.")
-            if key == 'rxwaveform':
+
+            if key == 'rxwaveform' :
                 waveform_strings = [','.join(str(value) for value in waveform) for waveform in values]
                 dt = h5py.special_dtype(vlen=str)
                 df_group.create_dataset(key, data=np.array(waveform_strings, dtype=dt))
@@ -1086,7 +1130,7 @@ def VA(lon1, lat1, lon2, lat2, altitude):
 def csv(exclusion_algo):
     
     
-    print("excluded algorithms:", exclusion_algo)
+
     
 
         
@@ -1433,8 +1477,8 @@ def merge_csv_on_id(output_dir):
     # Enregistrement du DataFrame fusionné
     final_output_path = os.path.join(parentDir, 'merged_output.csv')
 
-    # final_df.to_csv(final_output_path, index=False, sep=';', encoding='utf-8-sig')
-    final_df.to_csv(final_output_path, index=False)
+    final_df.to_csv(final_output_path, index=False, sep=';', encoding='utf-8-sig')
+    # final_df.to_csv(final_output_path, index=False)
     # Mise à jour finale de la barre de progression et du label
     progress_bar.setValue(total_files)
     label.setText(f"Process completed. File saved to: {final_output_path}")
@@ -1454,7 +1498,7 @@ def filtre(csvLineEdit):
     csvLineEdit = f'{csvLineEdit}'
     parentDir = os.path.dirname(os.path.abspath(csvLineEdit))
     # Lire le fichier CSV dans un DataFrame
-    df = pd.read_csv(csvLineEdit)
+    df = pd.read_csv(csvLineEdit, delimiter=';')
     init_len = len(df['IDS'])
     
     df = df[df['SNR'] != 0]
@@ -1467,8 +1511,41 @@ def filtre(csvLineEdit):
 
     # Enregistrement du DataFrame fusionné
     final_output_path = os.path.join(parentDir, 'merged_output.csv')
-    df.to_csv(final_output_path, index=False)
+    df.to_csv(final_output_path, index=False, sep=';', encoding='utf-8-sig')
     # Message de confirmation
+    
+    #FILTER .h5
+    h5_file_path = os.path.join(parentDir, "out.h5")
+    with h5py.File(h5_file_path, 'r+') as h5file:
+            # Extraction des datasets
+            ids = np.array(h5file['df']['IDS'])
+            snr = np.array(h5file['df']['SNR'])
+            geolocation_num_detectedmodes_a1 = np.array(h5file['df']['num_detectedmodes_a1'])
+            dem_srtm = np.array(h5file['df']['digital_elevation_model_srtm'])
+            elev_lowestmode_a1 = np.array(h5file['df']['elev_lowestmode_a1'])
+            rx_sample_count = np.array(h5file['df']['rx_sample_count'])
+            rx_processing_a1_search_end = np.array(h5file['df']['search_end'])
+            rx_waveform = np.array(h5file['df']['rxwaveform'])
+
+            # Indices à conserver
+            indices_to_keep = np.where(
+                (snr != 0) &
+                (geolocation_num_detectedmodes_a1 != 0) &
+                (abs(dem_srtm - elev_lowestmode_a1) < 100) &
+                ((rx_sample_count[:len(rx_sample_count)] - rx_processing_a1_search_end) > 0)
+            )[0]
+
+            df_group = h5file['df']
+            # Filtrage et suppression des anciens datasets
+            for dataset_name in df_group.keys():
+                dataset = np.array(df_group[dataset_name])
+                filtered_dataset = dataset[indices_to_keep]
+                
+                # Suppression de l'ancien dataset
+                del df_group[dataset_name]
+                # Ajout du dataset filtré
+                df_group.create_dataset(dataset_name, data=filtered_dataset)
+    
     QMessageBox.information(None, "Process Completed", f"File filtered \n Number of data filtered : {lenght}")
 
 
