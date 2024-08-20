@@ -1555,7 +1555,7 @@ def split_csv_on_algo(csvLineEdit):
     parentDir = os.path.dirname(os.path.abspath(csvLineEdit))
     
     # Lire le fichier CSV dans un DataFrame
-    df = pd.read_csv(csvLineEdit)
+    df = pd.read_csv(csvLineEdit, delimiter=';')
     
     test = ['geolocation_lon_lowestmode_a1','geolocation_lon_lowestmode_a2','geolocation_lon_lowestmode_a3',
             'geolocation_lon_lowestmode_a4','geolocation_lon_lowestmode_a5','geolocation_lon_lowestmode_a6']
