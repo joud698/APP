@@ -49,6 +49,7 @@ def create_main_window():
     main_window.setCentralWidget(central_widget)
 
     tab_widget = QTabWidget()
+    
 
     # Tab for DOWNLOAD
     utilities_tab = QWidget()
@@ -68,8 +69,9 @@ def create_main_window():
             color: white;
             border-radius: 8px;
             padding: 10px;
-            font-size: 16px;
+            font-size: 20px;
             border: none;
+            font-weight: bold;
         }
         QPushButton:hover {
             background: #2980b9;
@@ -90,8 +92,9 @@ def create_main_window():
             color: white;
             border-radius: 8px;
             padding: 10px;
-            font-size: 16px;
+            font-size: 20px;
             border: none;
+            font-weight: bold;
         }
         QPushButton:hover {
             background: #2980b9;
@@ -112,8 +115,9 @@ def create_main_window():
             color: white;
             border-radius: 8px;
             padding: 10px;
-            font-size: 16px;
+            font-size: 20px;
             border: none;
+            font-weight: bold;
         }
         QPushButton:hover {
             background: #2980b9;
@@ -137,8 +141,9 @@ def create_main_window():
             color: white;
             border-radius: 8px;
             padding: 10px;
-            font-size: 16px;
+            font-size: 20px;
             border: none;
+            font-weight: bold;
         }
         QPushButton:hover {
             background: #c0392b;
@@ -227,8 +232,9 @@ def create_main_window():
             color: white;
             border-radius: 8px;
             padding: 10px;
-            font-size: 16px;
+            font-size: 20px;
             border: none;
+            font-weight: bold;
         }
         QPushButton:hover {
             background: #c0392b;
@@ -254,7 +260,7 @@ def create_main_window():
     gen_tab.setLayout(gen_layout)
     
     # Input Directory
-    inDirLabel = QLabel("Enter the local directory containing GEDI .h5 files to be processed:")
+    inDirLabel = QLabel("Enter the local directory containing GEDI .h5 files to be processed (input):")
     inDirLayout = QHBoxLayout()  # Create a new layout for the input directory
     inDirLineEdit = QLineEdit()
     browseDirButton = QPushButton("📁 Browse")
@@ -265,8 +271,9 @@ def create_main_window():
             color: white;
             border-radius: 8px;
             padding: 10px;
-            font-size: 16px;
+            font-size: 20px;
             border: none;
+            font-weight: bold;
         }
         QPushButton:hover {
             background: #2980b9;
@@ -279,7 +286,7 @@ def create_main_window():
     inDirLayout.addWidget(browseDirButton)
     
     # KML File Selection
-    kmlLabel = QLabel("Select KML file to extract ROI:")
+    kmlLabel = QLabel("Select KML file to extract ROI (.kml):")
     kmlLayout = QHBoxLayout()  # Create a new layout for the KML selection
     kmlLineEdit = QLineEdit()
     browseKMLButton = QPushButton("📁 Browse")
@@ -290,8 +297,9 @@ def create_main_window():
             color: white;
             border-radius: 8px;
             padding: 10px;
-            font-size: 16px;
+            font-size: 20px;
             border: none;
+            font-weight: bold;
         }
         QPushButton:hover {
             background: #2980b9;
@@ -339,8 +347,9 @@ def create_main_window():
             color: white;
             border-radius: 8px;
             padding: 10px;
-            font-size: 16px;
+            font-size: 20px;
             border: none;
+            font-weight: bold;
         }
         QPushButton:hover {
             background: #0aa378;
@@ -377,7 +386,7 @@ def create_main_window():
     gedi_layout = QVBoxLayout()
     gedi_tab.setLayout(gedi_layout)
     
-    outDirLabel = QLabel("Enter the local directory containing CSV files to be merged:")
+    outDirLabel = QLabel("Enter the local directory containing CSV files to be merged (output_csv):")
     outDirLayout = QHBoxLayout()  # Create a new layout for the output directory
     outDirLineEdit = QLineEdit()
     browseoutButton = QPushButton("📁 Browse")
@@ -388,8 +397,9 @@ def create_main_window():
             color: white;
             border-radius: 8px;
             padding: 10px;
-            font-size: 16px;
+            font-size: 20px;
             border: none;
+            font-weight: bold;
         }
         QPushButton:hover {
             background: #2980b9;
@@ -409,8 +419,9 @@ def create_main_window():
             color: white;
             border-radius: 8px;
             padding: 10px;
-            font-size: 16px;
+            font-size: 20px;
             border: none;
+            font-weight: bold;
         }
         QPushButton:hover {
             background: #0aa378;
@@ -420,7 +431,7 @@ def create_main_window():
         }
     """)
     
-    csvLabel = QLabel("Select CSV file to be filtered:")
+    csvLabel = QLabel("Select CSV file to be filtered (merged_output.csv):")
     csvLayout = QHBoxLayout()  # Create a new layout for the CSV selection
     csvLineEdit = QLineEdit()
     browseCSVButton = QPushButton("📁 Browse")
@@ -431,8 +442,9 @@ def create_main_window():
             color: white;
             border-radius: 8px;
             padding: 10px;
-            font-size: 16px;
+            font-size: 20px;
             border: none;
+            font-weight: bold;
         }
         QPushButton:hover {
             background: #2980b9;
@@ -452,8 +464,9 @@ def create_main_window():
             color: white;
             border-radius: 8px;
             padding: 10px;
-            font-size: 16px;
+            font-size: 20px;
             border: none;
+            font-weight: bold;
         }
         QPushButton:hover {
             background: #0aa378;
@@ -463,7 +476,7 @@ def create_main_window():
         }
     """)
     
-    csvLabel2 = QLabel("Select CSV file to be split according to algorithms:")
+    csvLabel2 = QLabel("Select CSV file to be split according to algorithms (merged_output.csv or merged_output_filtered.csv):")
     csvLayout2 = QHBoxLayout()  # Create a new layout for the second CSV selection
     csvLineEdit2 = QLineEdit()
     browseCSVButton2 = QPushButton("📁 Browse")
@@ -474,8 +487,9 @@ def create_main_window():
             color: white;
             border-radius: 8px;
             padding: 10px;
-            font-size: 16px;
+            font-size: 20px;
             border: none;
+            font-weight: bold;
         }
         QPushButton:hover {
             background: #2980b9;
@@ -496,8 +510,9 @@ def create_main_window():
             color: white;
             border-radius: 8px;
             padding: 10px;
-            font-size: 16px;
+            font-size: 20px;
             border: none;
+            font-weight: bold;
         }
         QPushButton:hover {
             background: #0aa378;
@@ -526,8 +541,9 @@ def create_main_window():
             color: white;
             border-radius: 8px;
             padding: 10px;
-            font-size: 16px;
+            font-size: 20px;
             border: none;
+            font-weight: bold;
         }
         QPushButton:hover {
             background: #c0392b;
@@ -558,8 +574,9 @@ def create_main_window():
             color: white;
             border-radius: 8px;
             padding: 10px;
-            font-size: 16px;
+            font-size: 20px;
             border: none;
+            font-weight: bold;
         }
         QPushButton:hover {
             background: #2980b9;
@@ -577,8 +594,10 @@ def create_main_window():
             color: white;
             border-radius: 8px;
             padding: 10px;
-            font-size: 16px;
+            font-size: 20px;
             border: none;
+            font-weight: bold;
+            
         }
         QPushButton:hover {
             background: #c0392b;
@@ -614,8 +633,9 @@ def create_main_window():
     }
     
     QLabel {
-        font-size: 16px;
+        font-size: 18px;
         color: #ecf0f1;
+        font-weight: bold;
     }
     
     QLineEdit {
@@ -835,7 +855,7 @@ def process_files(inDirLineEdit, roiLineEdit, outputFileLineEdit, sdsLineEdit, a
         progress_bar.setValue(i + 1)
         QApplication.processEvents()  # Assurez-vous que la barre de chargement se met à jour
 
-
+    progress_dialog.close()
     merged_data = merge_data(gediFiles, beams=beamSubset, sds=layerSubset)
 
     output_hdf5_file = os.path.join(parentDir, output_file)
@@ -1548,7 +1568,7 @@ def filtre(csvLineEdit):
     lenght = init_len - final_len 
 
     # Enregistrement du DataFrame fusionné
-    final_output_path = os.path.join(parentDir, 'merged_output.csv')
+    final_output_path = os.path.join(parentDir, 'merged_output_filtered.csv')
     df.to_csv(final_output_path, index=False, sep=';', encoding='utf-8-sig')
     # Message de confirmation
     
@@ -1566,11 +1586,17 @@ def filtre(csvLineEdit):
             rx_waveform = np.array(h5file['df']['rxwaveform'])
 
             # Indices à conserver
+            if len(rx_sample_count) == len(rx_processing_a1_search_end):
+                rx = rx_sample_count - rx_processing_a1_search_end
+                
+            else:
+                rx = rx_sample_count[:len(rx_sample_count)-1] - rx_processing_a1_search_end
+                    
             indices_to_keep = np.where(
                 (snr != 0) &
                 (geolocation_num_detectedmodes_a1 != 0) &
                 (abs(dem_srtm - elev_lowestmode_a1) < 100) &
-                ((rx_sample_count[:len(rx_sample_count)-1] - rx_processing_a1_search_end) > 0)
+                (rx > 0)
             )[0]
 
             df_group = h5file['df']
