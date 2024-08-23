@@ -717,6 +717,7 @@ def extract_h5_from_zip(file_path, label, progress_bar):
                 label.setText(f"All .h5 files extracted and stored in: {input_folder}")
                 progress_bar.setValue(int(current_file / file_count * 100))  # Update progress bar
     progress_bar.setValue(100)  # Ensure progress bar is at 100% after completion
+    # QMessageBox.information("All .zip files extracted")
 
 
 #%% PROCESSING
@@ -918,8 +919,8 @@ def merge_data(files, beams=None, sds=None):
        
         
         merged_data['rxwaveform'] = merged_data['rxwaveform'][:]    
-        lent = len(merged_data['rxwaveform'])
-
+        lent = len(merged_data['rxwaveform']) 
+       
         merged_data['shot_number'] = merged_data['shot_number'][:lent]     
         merged_data['IDS'] = merged_data['IDS'][:lent] 
         merged_data['lat_lowestmode'] = merged_data['lat_lowestmode'][:lent] 
@@ -983,6 +984,7 @@ def process_file(file_path, beams=None, sds=None):
                 continue
             shot_numbers = f[beam]['geolocation']['shot_number'][:]
             ids = create_ids(shot_numbers)
+
             data['shot_number'].extend(shot_numbers)
             data['IDS'].extend(ids)
             
@@ -1233,10 +1235,13 @@ def csv(exclusion_algo):
         l2aSubset = [ j for j in l2aSubset if exclusion_algo[i] not in j ]
         l2bSubset = [ j for j in l2bSubset if exclusion_algo[i] not in j ]
         
-        
-        
-    
-                      
+    l2aSubset.append('/rx_processing_a1/mean')    
+    l2aSubset.append('/rx_processing_a1/stddev')       
+    l2aSubset.append('/rx_processing_a1/rx_modeamps')
+    l2aSubset.append('/geolocation/num_detectedmodes_a1')
+    l2aSubset.append('/geolocation/elev_lowestmode_a1')
+    l2aSubset.append('/rx_processing_a1/search_end')
+
     # ----------------------------------------------------------------------------------------- # 
     
     
@@ -1453,6 +1458,25 @@ def csv(exclusion_algo):
 def merge_csv_on_id(output_dir):
     parentDir = os.path.dirname(os.path.abspath(output_dir))
     
+    #FILTER .h5
+    h5_file_path = os.path.join(parentDir, "out.h5")
+    with h5py.File(h5_file_path, 'r+') as h5file:
+        rx = np.array(h5file['df']['search_end'])
+        TAILLE = len(rx) 
+        print(TAILLE)
+        for nom_dataset in h5file['df']:
+            dataset = h5file['df'][nom_dataset]
+            data = dataset[()]
+            
+            # Créer un nouveau dataset avec la forme modifiée
+            del h5file['df'][nom_dataset]  # Supprimer l'ancien dataset
+            h5file['df'].create_dataset(nom_dataset, data=data[:TAILLE])
+        
+        
+    
+        
+    
+    
     # Liste de tous les fichiers CSV dans le répertoire de sortie
     csv_files = glob.glob(os.path.join(output_dir, '*.csv'))
     
@@ -1481,6 +1505,9 @@ def merge_csv_on_id(output_dir):
         
         # Lecture du CSV
         df = pd.read_csv(csv_file)
+        # Supprimer les lignes contenant des cases vides
+        # Supprimer les lignes contenant des cases vides
+        df = df.dropna()
         
         # Fusion avec le DataFrame final basé sur la colonne 'IDS'
         if final_df.empty:
@@ -1492,37 +1519,36 @@ def merge_csv_on_id(output_dir):
                     final_df[column].fillna(final_df[f'{column}_new'], inplace=True)
                     final_df.drop(columns=[f'{column}_new'], inplace=True)
                     
-    # Récupération des colonnes nécessaires
-    if all(col in final_df.columns for col in [
-        'rx_processing_a1_mean', 'rx_processing_a1_stddev', 'rx_processing_a1_rx_modeamps_0',
-        'geolocation_longitude_bin0', 'geolocation_latitude_bin0',
-        'geolocation_longitude_instrument', 'geolocation_latitude_instrument',
-        'geolocation_altitude_instrument']):
+    final_df = final_df[:TAILLE]                
+
+    
+    # Calcul du Datetime
+    final_df['DateTime'] = final_df['delta_time'].apply(lambda x: (datetime(2018, 1, 1, 0, 0, 0) + timedelta(seconds=x)) if not pd.isna(x) else pd.NaT)
+ 
+    
+    #FILTER .h5
+    h5_file_path = os.path.join(parentDir, "out.h5")
+    with h5py.File(h5_file_path, 'r+') as h5file:
+            # Extraction des datasets
+            snr = np.array(h5file['df']['SNR'])
+            va = np.array(h5file['df']['VA'])
+            a = np.array(h5file['df']['num_detectedmodes_a1'])
+            s = np.array(h5file['df']['digital_elevation_model_srtm']) #!!!!!!!!!!!!!!!!!!!!absent dans merged_output.csv
+            c = np.array(h5file['df']['elev_lowestmode_a1'])
+            d = np.array(h5file['df']['rx_sample_count'])
+            e = np.array(h5file['df']['search_end'])
+
+    # print(s)       
+    final_df['SNR'] =  snr
+    final_df['VA'] =  va
+    final_df['num_detectedmodes_a1'] = a
+    final_df['geolocation_digital_elevation_model_srtm'] = s
+    final_df['elev_lowestmode_a1'] = c
+    final_df['rx_sample_count'] = d
+    final_df['search_end'] = e
+
+    
         
-        mean = final_df['rx_processing_a1_mean']
-        stddev = final_df['rx_processing_a1_stddev']
-        lon1 = final_df['geolocation_longitude_bin0']
-        lat1 = final_df['geolocation_latitude_bin0']
-        lon2 = final_df['geolocation_longitude_instrument']
-        lat2 = final_df['geolocation_latitude_instrument']
-        altitude_i = final_df['geolocation_altitude_instrument']
-        
-        
-        # Extraction des colonnes rx_modeamps
-        amp_columns = [col for col in final_df.columns if col.startswith('rx_processing_a1_rx_modeamps_')]
-        maxamp = final_df[amp_columns].max(axis=1)
-        
-        # Calcul du SNR
-        final_df['SNR'] = [10*math.log10((x-y)/z) if (z > 0 and x > y) else 0 for x, y, z in zip(maxamp, mean, stddev)]
-        
-        # Calcul du VA
-        VA_metric = [VA(lo1, la1, lo2, la2, al) for lo1, la1, lo2, la2, al in zip(lon1, lat1, lon2, lat2, altitude_i)]
-        final_df['VA'] = VA_metric
-        
-        # Calcul du Datetime
-        final_df['DateTime'] = final_df['delta_time'].apply(lambda x: (datetime(2018, 1, 1, 0, 0, 0) + timedelta(seconds=x)) if not pd.isna(x) else pd.NaT)
-    else :
-        print("non")
     # Réorganiser les colonnes pour placer 'IDS' en premier
     if 'IDS' and 'SNR' and 'VA' in final_df.columns:
         cols = ['IDS'] + ['SNR'] + ['VA'] + ['DateTime'] + [col for col in final_df.columns if col != 'IDS' and col != 'SNR' and col != 'VA' and col != 'DateTime']
@@ -1530,6 +1556,10 @@ def merge_csv_on_id(output_dir):
         
     # Enregistrement du DataFrame fusionné
     final_output_path = os.path.join(parentDir, 'merged_output.csv')
+    
+   
+    final_df = final_df.head(TAILLE)
+    final_df = final_df.replace(r'^\s*$', np.nan, regex=True)
 
     final_df.to_csv(final_output_path, index=False, sep=';', encoding='utf-8-sig')
     # final_df.to_csv(final_output_path, index=False)
@@ -1551,6 +1581,12 @@ def merge_csv_on_id(output_dir):
  
 # filter CSV file according to SNR
 def filtre(csvLineEdit):
+    # Afficher la première boîte de message
+    processing_message = QMessageBox()
+    processing_message.setIcon(QMessageBox.Information)
+    processing_message.setWindowTitle("Processing")
+    processing_message.setText("Wait for filtering...")
+    processing_message.show()
     
     csvLineEdit = csvLineEdit.replace("/", "\\")
     csvLineEdit = f'{csvLineEdit}'
@@ -1559,10 +1595,14 @@ def filtre(csvLineEdit):
     df = pd.read_csv(csvLineEdit, delimiter=';')
     init_len = len(df['IDS'])
     
-    df = df[df['SNR'] != 0]
-    df = df[df['geolocation_num_detectedmodes_a1'] != 0]
-    df= df[abs(df['digital_elevation_model_srtm'] - df['geolocation_elev_lowestmode_a1']) < 100]
-    df= df[(df['rx_sample_count'] - df['rx_processing_a1_search_end']) > 0]
+    df = df[(df['SNR'] != 0) | (df['SNR'].isna())]
+    df = df[(df['num_detectedmodes_a1'] != 0) | (df['num_detectedmodes_a1'].isna())]
+    df = df[(abs(df['geolocation_digital_elevation_model_srtm'] - df['elev_lowestmode_a1']) < 100) | 
+            (df['geolocation_digital_elevation_model_srtm'].isna()) | (df['elev_lowestmode_a1'].isna())]
+    df = df[(df['rx_sample_count'] - df['search_end'] > 0) | 
+            (df['rx_sample_count'].isna()) | (df['search_end'].isna())]
+        
+    
     final_len = len(df['IDS'])
     
     lenght = init_len - final_len 
@@ -1614,10 +1654,18 @@ def filtre(csvLineEdit):
     merged_df = pd.read_csv(final_output_path, sep=';', encoding='utf-8-sig')
     num_rows, num_cols = merged_df.shape
 
+    processing_message.close()
     QMessageBox.information(None, "Process Completed", f"File filtered \n Number of data filtered : {lenght}\nNumber of rows: {num_rows}\nNumber of columns: {num_cols}")
 
 
 def split_csv_on_algo(csvLineEdit):
+    # Afficher la première boîte de message
+    processing_message = QMessageBox()
+    processing_message.setIcon(QMessageBox.Information)
+    processing_message.setWindowTitle("Processing")
+    processing_message.setText("Wait for filtering...")
+    processing_message.show()
+    
     csvLineEdit = csvLineEdit.replace("/", "\\")
     csvLineEdit = f'{csvLineEdit}'
     parentDir = os.path.dirname(os.path.abspath(csvLineEdit))
@@ -1673,7 +1721,7 @@ def split_csv_on_algo(csvLineEdit):
                 # print(f"Fichier {output_file} créé avec succès.")
             
     selected = ' // '.join(selected)    
-
+    processing_message.close()
     # Message de confirmation
     QMessageBox.information(None, f"Process Completed", f"File splited into algo : {selected}  ")
    
