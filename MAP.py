@@ -50,6 +50,28 @@ def plot_data(ax, i):
     # Données d'entrée
     data = data_wave[i]
     
+    #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+        
+    # # Calculer les statistiques de base
+    # mean_value = np.mean(data)
+    # std_value = np.std(data)
+    # max_value = np.max(data)
+    # min_value = np.min(data)
+    # median_value = np.median(data)
+    # q1_value = np.percentile(data, 25)  # Premier quartile
+    # q3_value = np.percentile(data, 75)  # Troisième quartile
+
+    # # Afficher les résultats
+    # print(f"Mean: {mean_value}")
+    # print(f"Standard Deviation: {std_value}")
+    # print(f"Maximum: {max_value}")
+    # print(f"Minimum: {min_value}")
+    # print(f"Median: {median_value}")
+    # print(f"First Quartile (Q1): {q1_value}")
+    # print(f"Third Quartile (Q3): {q3_value}")    
+
+    #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    
     # Étape 1 : Décoder la chaîne d'octets en chaîne de caractères
     decoded_data = data.decode('utf-8')
     
@@ -76,7 +98,7 @@ def plot_data(ax, i):
     plt.close()
 
 def create_map_widget(i, parent=None):
-    latitude, longitude, elevation, rh98_a1 = generate_coordinates(i)
+    latitude, longitude, elevation, rh98_a1,Id = generate_coordinates(i)
     if latitude is None or longitude is None:
         QMessageBox.warning(None, "Error", "No .h5 file has been loaded.")
         return QLabel("Error: No .h5 file has been loaded.", alignment=Qt.AlignCenter)
@@ -101,7 +123,7 @@ def create_map_widget(i, parent=None):
 
         # Show 9 points around the target point
         for index in range(max(0, i-4), min(len(data_lat), i+5)):
-            if index != i:
+            if index != i-1:
                 folium.Circle(
                     location=[data_lat[index], data_lon[index]],
                     radius=25,
@@ -123,7 +145,7 @@ def create_map_widget(i, parent=None):
 
     popup_html = f'''
         <div style="font-family: Arial, sans-serif; font-size: 14px; background-color: #f39c12; color: white; text-align: center; padding: 10px; border-radius: 10px;">
-            <h3 style="margin: 0; padding: 0;">ID : {i}</h3>
+            <h3 style="margin: 0; padding: 0;">ID : {Id}</h3>
             <p><strong>Latitude:</strong> {latitude}</p>
             <p><strong>Longitude:</strong> {longitude}</p>
             <p><strong>Elevation_lowestmode (m):</strong> {elevation}</p>
@@ -144,18 +166,22 @@ def generate_coordinates(i):
     with h5py.File(h5_file_path, 'r') as file:
         dataset_name = 'df/lon_lowestmode'
         data_lon = file[dataset_name][:]
-        lon = data_lon[i]
+        lon = data_lon[i-1]
         dataset_name = 'df/lat_lowestmode'
         data_lat = file[dataset_name][:]
-        lat = data_lat[i]
+        lat = data_lat[i-1]
         dataset_name = 'df/elev_lowestmode'
         data_elev = file[dataset_name][:]
-        elev = data_elev[i]
+        elev = data_elev[i-1]
         dataset_name = 'df/rh_a1'
         data_rh98_a1 = file[dataset_name][:, 98]  
-        rh98_a1 = data_rh98_a1[i]
+        rh98_a1 = data_rh98_a1[i-1]
+        dataset_name = 'df/IDS'
+        data_IDS = file[dataset_name][:]
+        Id = data_IDS[i]
+        Id = Id.decode('utf-8')
 
-    return lat, lon, elev, rh98_a1
+    return lat, lon, elev, rh98_a1, Id
 
 def get_nb_points():
     global nb_points, h5_file_path
@@ -257,7 +283,7 @@ def setup_ui(window):
 
     layout.addWidget(drag_drop_frame)
     
- 
+  
     # Input field for ID
     id_input_label = QLabel("Please enter an ID:")
     id_input_label.setFont(QFont("Arial", 14))
@@ -448,5 +474,3 @@ def MAIN() :
         map_window = QMainWindow()
         setup_ui(map_window)
     map_window.show()
-
-
