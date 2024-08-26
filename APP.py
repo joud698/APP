@@ -106,7 +106,7 @@ def create_main_window():
     buttons_layout.addWidget(open_google_earth_button)
 
     # Bouton pour ouvrir la page de téléchargement des données GEDI
-    open_gedi_website_button = QPushButton("🌐 Open GEDI Data Download Page")
+    open_gedi_website_button = QPushButton("🌐 Open GEDI Data        \n      Download Page")
     open_gedi_website_button.setFixedSize(300, 500)  # Taille uniforme
     open_gedi_website_button.clicked.connect(open_gedi_website)
     open_gedi_website_button.setStyleSheet("""
@@ -157,6 +157,27 @@ def create_main_window():
     tab_widget.addTab(utilities_tab, "DOWNLOAD")
 
     # Tab for Drag and Drop Unzipper
+    # Bouton pour fermer l'application
+    quit_button = QPushButton("❌ Close")
+    quit_button.setFixedSize(300, 50)  # Taille uniforme
+    quit_button.clicked.connect(QApplication.instance().quit)
+    quit_button.setStyleSheet("""
+        QPushButton {
+            background: #e74c3c;
+            color: white;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 20px;
+            border: none;
+            font-weight: bold;
+        }
+        QPushButton:hover {
+            background: #c0392b;
+        }
+        QPushButton:pressed {
+            background: #a93226;
+        }
+    """)
     unzip_tab = QWidget()
     unzip_layout = QVBoxLayout()
     unzip_tab.setLayout(unzip_layout)
@@ -183,7 +204,54 @@ def create_main_window():
     
     # Add the drag frame to the main layout
     unzip_layout.addWidget(drag_frame)
+    unzip_layout.addWidget(quit_button)
     
+    def search_granule(file_path):
+        # Directory where .h5 files are stored (change this to the appropriate directory)
+        h5_directory = file_path
+        expected = []
+        aliste = []
+        part1 = ['GEDI01','GEDI02']
+        part2 = ['A','B']
+        part3 = []
+        
+        # List all .h5 files in the directory
+        for file_name in os.listdir(h5_directory):
+            if file_name.endswith(".h5"):
+                parts = file_name.split('_')
+                
+                if parts[3] not in part3:
+                    part3.append(parts[3])
+                    
+        part3 = sorted(part3)            
+        for i in range(len(part1)):
+            for j in range(len(part2)):
+                for k in range(len(part3)):
+             
+                    l = part1[i] + '_' + part2[j] + '_' + part3[k]
+                    if part1[i] + '_' + part2[j] != 'GEDI01_A':
+                        if l not in expected:
+                            expected.append(l)
+          
+        for file_name in os.listdir(h5_directory):
+            if file_name.endswith(".h5"):
+                parts = file_name.split('_')
+                actual = parts[1] + '_' + parts[2] + '_' + parts[3]
+                aliste.append(actual)
+        loose = []           
+        for i in range(len(aliste)):
+            if expected[i] != aliste[i]:
+                aliste.insert(i, "_") 
+                print("expected :", expected[i])
+                loose.append(expected[i])
+    
+        if expected[-1] != aliste[-1]:
+            aliste.append('_')
+            print("expected :", expected[-1])   
+            loose.append(expected[i])
+        loose = ' / '.join(f'"{element}"' for element in loose)    
+        QMessageBox.information(None, "Process Completed", f"The following files are missing {loose}")
+            
     # Drag and drop events
     def drag_enter_event(event):
         if event.mimeData().hasUrls():
@@ -197,6 +265,13 @@ def create_main_window():
                 label.setText(f"File dropped: {file_path}")
                 if file_path.endswith('.zip'):
                     extract_h5_from_zip(file_path, label, progress_bar)
+                    
+        # Extraire le répertoire de base
+        base_dir = os.path.dirname(file_path)
+        # Créer le nouveau chemin
+        file_path_2 = os.path.join(base_dir, "input")
+        search_granule(file_path_2)
+        QMessageBox.information(None, "Process Completed", "All .zip files extracted")
     
     central_widget.dragEnterEvent = lambda event: drag_enter_event(event)
     central_widget.dropEvent = lambda event: drop_event(event, unzip_label)
@@ -223,6 +298,26 @@ def create_main_window():
     """)
     unzip_layout.addWidget(progress_bar)
     
+    browseDirButton = QPushButton("📁 FIND .zip files")
+    browseDirButton.clicked.connect(lambda: browse_zip())
+    browseDirButton.setStyleSheet("""
+        QPushButton {
+            background: #3498db;
+            color: white;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 20px;
+            border: none;
+            font-weight: bold;
+        }
+        QPushButton:hover {
+            background: #2980b9;
+        }
+        QPushButton:pressed {
+            background: #1f618d;
+        }
+    """)
+    # unzip_layout.addWidget(browseDirButton)
     # Quit button
     quit_button = QPushButton("❌ Close")
     quit_button.clicked.connect(QApplication.instance().quit)
@@ -717,10 +812,13 @@ def extract_h5_from_zip(file_path, label, progress_bar):
                 label.setText(f"All .h5 files extracted and stored in: {input_folder}")
                 progress_bar.setValue(int(current_file / file_count * 100))  # Update progress bar
     progress_bar.setValue(100)  # Ensure progress bar is at 100% after completion
-    # QMessageBox.information("All .zip files extracted")
+
 
 
 #%% PROCESSING
+def browse_zip():
+    dir_name = QFileDialog.getExistingDirectory(None, "Select Directory")
+    
 def browse_directory(inDirLineEdit):
     dir_name = QFileDialog.getExistingDirectory(None, "Select Directory")
     if dir_name:
@@ -1613,8 +1711,9 @@ def filtre(csvLineEdit):
     # Message de confirmation
     
     #FILTER .h5
-    h5_file_path = os.path.join(parentDir, "out.h5")
-    with h5py.File(h5_file_path, 'r+') as h5file:
+    h5_file_path_source = os.path.join(parentDir, "out.h5")
+    h5_file_path_destination = os.path.join(parentDir, "out_filtered.h5")
+    with h5py.File(h5_file_path_source, 'r+') as h5file:
             # Extraction des datasets
             ids = np.array(h5file['df']['IDS'])
             snr = np.array(h5file['df']['SNR'])
@@ -1638,8 +1737,14 @@ def filtre(csvLineEdit):
                 (abs(dem_srtm - elev_lowestmode_a1) < 100) &
                 (rx > 0)
             )[0]
+    
+                
+    source = h5_file_path_source
+    destination = h5_file_path_destination
 
-            df_group = h5file['df']
+    shutil.copyfile(source, destination)
+    with h5py.File(h5_file_path_destination, 'r+') as file:
+            df_group = file['df']
             # Filtrage et suppression des anciens datasets
             for dataset_name in df_group.keys():
                 dataset = np.array(df_group[dataset_name])
@@ -1655,7 +1760,7 @@ def filtre(csvLineEdit):
     num_rows, num_cols = merged_df.shape
 
     processing_message.close()
-    QMessageBox.information(None, "Process Completed", f"File filtered \n Number of data filtered : {lenght}\nNumber of rows: {num_rows}\nNumber of columns: {num_cols}")
+    QMessageBox.information(None, "Process Completed", f"File filtered \n Number of data filtered : {lenght}\nNumber of rows : {num_rows}\nNumber of columns : {num_cols}")
 
 
 def split_csv_on_algo(csvLineEdit):
