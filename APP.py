@@ -238,19 +238,24 @@ def create_main_window():
                 parts = file_name.split('_')
                 actual = parts[1] + '_' + parts[2] + '_' + parts[3]
                 aliste.append(actual)
-        loose = []           
+        loose = []     
+        compt = 0
         for i in range(len(aliste)):
             if expected[i] != aliste[i]:
+                compt +=1
                 aliste.insert(i, "_") 
                 print("expected :", expected[i])
                 loose.append(expected[i])
     
         if expected[-1] != aliste[-1]:
             aliste.append('_')
+            compt +=1
             print("expected :", expected[-1])   
             loose.append(expected[i])
         loose = ' / '.join(f'"{element}"' for element in loose)    
-        QMessageBox.information(None, "Process Completed", f"The following files are missing {loose}")
+        
+        if compt != 0:
+            QMessageBox.information(None, "Process Completed", f"The following files are missing {loose}")
             
     # Drag and drop events
     def drag_enter_event(event):
