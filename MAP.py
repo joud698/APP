@@ -98,7 +98,7 @@ def plot_data(ax, i):
     plt.close()
 
 def create_map_widget(i, parent=None):
-    latitude, longitude, elevation, rh98_a1,Id = generate_coordinates(i)
+    latitude, longitude, elevation, rh98_a1,Id,alt = generate_coordinates(i)
     if latitude is None or longitude is None:
         QMessageBox.warning(None, "Error", "No .h5 file has been loaded.")
         return QLabel("Error: No .h5 file has been loaded.", alignment=Qt.AlignCenter)
@@ -123,7 +123,7 @@ def create_map_widget(i, parent=None):
 
         # Show 9 points around the target point
         for index in range(max(0, i-4), min(len(data_lat), i+5)):
-            if index != i-1:
+            if index != i:
                 folium.Circle(
                     location=[data_lat[index], data_lon[index]],
                     radius=25,
@@ -150,6 +150,7 @@ def create_map_widget(i, parent=None):
             <p><strong>Longitude:</strong> {longitude}</p>
             <p><strong>Elevation_lowestmode (m):</strong> {elevation}</p>
             <p><strong>rh98_a1 (cm):</strong> {rh98_a1}</p>
+            <p><strong>ALT:</strong> {alt}</p>
         </div>
     '''
     popup = folium.Popup(popup_html, max_width=300)
@@ -163,25 +164,29 @@ def generate_coordinates(i):
     global h5_file_path
     if h5_file_path is None:
         return None, None
+
     with h5py.File(h5_file_path, 'r') as file:
         dataset_name = 'df/lon_lowestmode'
         data_lon = file[dataset_name][:]
-        lon = data_lon[i-1]
+        lon = data_lon[i]
+        dataset_name = 'df/altitude_instrument'
+        data_alt = file[dataset_name][:]
+        alt = data_alt[i]
         dataset_name = 'df/lat_lowestmode'
         data_lat = file[dataset_name][:]
-        lat = data_lat[i-1]
+        lat = data_lat[i]
         dataset_name = 'df/elev_lowestmode'
         data_elev = file[dataset_name][:]
-        elev = data_elev[i-1]
+        elev = data_elev[i]
         dataset_name = 'df/rh_a1'
         data_rh98_a1 = file[dataset_name][:, 98]  
-        rh98_a1 = data_rh98_a1[i-1]
+        rh98_a1 = data_rh98_a1[i]
         dataset_name = 'df/IDS'
         data_IDS = file[dataset_name][:]
         Id = data_IDS[i]
         Id = Id.decode('utf-8')
 
-    return lat, lon, elev, rh98_a1, Id
+    return lat, lon, elev, rh98_a1, Id, alt
 
 def get_nb_points():
     global nb_points, h5_file_path
@@ -474,3 +479,4 @@ def MAIN() :
         map_window = QMainWindow()
         setup_ui(map_window)
     map_window.show()
+
