@@ -254,8 +254,11 @@ def create_main_window():
             loose.append(expected[i])
         loose = ' / '.join(f'"{element}"' for element in loose)    
         
+        
         if compt != 0:
             QMessageBox.information(None, "Process Completed", f"The following files are missing {loose}")
+        else :
+            QMessageBox.information(None, "Process Completed", "0 missing files")
             
     # Drag and drop events
     def drag_enter_event(event):
@@ -276,7 +279,8 @@ def create_main_window():
         # Créer le nouveau chemin
         file_path_2 = os.path.join(base_dir, "input")
         search_granule(file_path_2)
-        QMessageBox.information(None, "Process Completed", "All .zip files extracted")
+        
+      
     
     central_widget.dragEnterEvent = lambda event: drag_enter_event(event)
     central_widget.dropEvent = lambda event: drop_event(event, unzip_label)
@@ -964,10 +968,9 @@ def process_files(inDirLineEdit, roiLineEdit, outputFileLineEdit, sdsLineEdit, a
 
     output_hdf5_file = os.path.join(parentDir, output_file)
     write_to_hdf5(output_hdf5_file, merged_data)
+    
+    
     csv(exclusion_algo)
-    progress_dialog.close()
-
-
     QMessageBox.information(None, "Process Completed", f"Merged HDF5 file created at: {output_hdf5_file}")
 
 def merge_data(files, beams=None, sds=None):
@@ -1253,17 +1256,7 @@ def VA(lon1, lat1, lon2, lat2, altitude):
 
 #%% GENERATE CSV    
 
-def show_progress_message(num_files_processed, total_files):
-    """Affiche une boîte de dialogue indiquant la progression en utilisant PyQt."""
-    app = QApplication([])  # Crée une application PyQt (nécessaire pour les dialogues)
-    
-    # Crée une boîte de message pour afficher la progression
-    message = f"Fichiers générés : {num_files_processed}/{total_files}"
-    msgBox = QMessageBox()
-    msgBox.setIcon(QMessageBox.Information)
-    msgBox.setText(message)
-    msgBox.setWindowTitle("Progression")
-    msgBox.exec_()    
+
     
 def csv(exclusion_algo):
     
@@ -1359,16 +1352,11 @@ def csv(exclusion_algo):
     gediFiles = [o for o in os.listdir() if o.endswith('.h5') and 'GEDI' in o]
     total_files = len(gediFiles)  # Nombre total de fichiers à traiter
     
-    # Import GEDI files and set up PyQt application
-    bar = QApplication([])
-    
-    # Create a main window and set up a progress bar
-    window = QMainWindow()
-    window.setWindowTitle("Progress")
-    window.setGeometry(100, 100, 300, 100)  # (x, y, width, height)
+
+
     
     progress_dialog = QDialog()
-    progress_dialog.setWindowTitle("Processing Files")
+    progress_dialog.setWindowTitle("Processing Files")  
     layout = QVBoxLayout(progress_dialog)
     
     progress_bar = QProgressBar()
@@ -1555,6 +1543,7 @@ def csv(exclusion_algo):
         progress_bar.setValue(l)
         progress_label.setText(f".csv files generated : {l}/{total_files}")
         QApplication.processEvents()  # Permet à l'interface de se mettre à jour
+    # progress_dialog.close()
    
     
 # Merge all CSV et ajout de VA et SNR
@@ -1610,7 +1599,7 @@ def merge_csv_on_id(output_dir):
         df = pd.read_csv(csv_file)
         # Supprimer les lignes contenant des cases vides
         # Supprimer les lignes contenant des cases vides
-        df = df.dropna()
+        # df = df.dropna()
         
         # Fusion avec le DataFrame final basé sur la colonne 'IDS'
         if final_df.empty:
@@ -1636,7 +1625,7 @@ def merge_csv_on_id(output_dir):
             snr = np.array(h5file['df']['SNR'])
             va = np.array(h5file['df']['VA'])
             a = np.array(h5file['df']['num_detectedmodes_a1'])
-            s = np.array(h5file['df']['digital_elevation_model_srtm']) #!!!!!!!!!!!!!!!!!!!!absent dans merged_output.csv
+            s = np.array(h5file['df']['digital_elevation_model_srtm']) 
             c = np.array(h5file['df']['elev_lowestmode_a1'])
             d = np.array(h5file['df']['rx_sample_count'])
             e = np.array(h5file['df']['search_end'])
