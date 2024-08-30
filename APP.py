@@ -1555,7 +1555,8 @@ def merge_csv_on_id(output_dir):
     with h5py.File(h5_file_path, 'r+') as h5file:
         rx = np.array(h5file['df']['search_end'])
         TAILLE = len(rx) 
-        print(TAILLE)
+        dataset_name = 'df/IDS'
+        data_ids = h5file[dataset_name][:]
         for nom_dataset in h5file['df']:
             dataset = h5file['df'][nom_dataset]
             data = dataset[()]
@@ -1563,15 +1564,16 @@ def merge_csv_on_id(output_dir):
             # Créer un nouveau dataset avec la forme modifiée
             del h5file['df'][nom_dataset]  # Supprimer l'ancien dataset
             h5file['df'].create_dataset(nom_dataset, data=data[:TAILLE])
+    ids=[]
+    for i in range(len(data_ids)):
+        decoded_data = data_ids[i].decode('utf-8')
+        string_values = decoded_data.split(',')
+        ids.append(string_values[0])         
         
-        
-    
-        
-    
-    
     # Liste de tous les fichiers CSV dans le répertoire de sortie
     csv_files = glob.glob(os.path.join(output_dir, '*.csv'))
     
+
     # Création de la boîte de dialogue avec une barre de chargement et un label
     progress_dialog = QDialog()
     progress_dialog.setWindowTitle("Processing Files")
@@ -1611,13 +1613,16 @@ def merge_csv_on_id(output_dir):
                     final_df[column].fillna(final_df[f'{column}_new'], inplace=True)
                     final_df.drop(columns=[f'{column}_new'], inplace=True)
                     
-    final_df = final_df[:TAILLE]                
+                   
 
     
     # Calcul du Datetime
     final_df['DateTime'] = final_df['delta_time'].apply(lambda x: (datetime(2018, 1, 1, 0, 0, 0) + timedelta(seconds=x)) if not pd.isna(x) else pd.NaT)
- 
     
+    final_df = final_df.set_index('IDS').reindex(ids).reset_index() #!!!
+    final_df = final_df[:TAILLE]
+    print("TAILLE :",TAILLE)
+    print("IDS :", len(final_df['IDS']))
     #FILTER .h5
     h5_file_path = os.path.join(parentDir, "out.h5")
     with h5py.File(h5_file_path, 'r+') as h5file:
@@ -1630,6 +1635,7 @@ def merge_csv_on_id(output_dir):
             d = np.array(h5file['df']['rx_sample_count'])
             e = np.array(h5file['df']['search_end'])
 
+    print("snr : ",len(snr))
     # print(s)       
     final_df['SNR'] =  snr
     final_df['VA'] =  va
