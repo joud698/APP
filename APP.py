@@ -432,6 +432,8 @@ def create_main_window():
     sdsLabel = QLabel("Enter specific science datasets (SDS) to include in the output .csv file (optional):")
     sdsLineEdit = QLineEdit()
     
+    
+    
     # Algorithm Selection Checkboxes
     algoLabel = QLabel("Select algorithms to be used:")
     algoLayout = QHBoxLayout()  # Create a new layout for the algorithms checkboxes
@@ -896,6 +898,7 @@ def process_files(inDirLineEdit, roiLineEdit, outputFileLineEdit, sdsLineEdit, a
     output_file = "out.h5"
     beams_input = None
     sds_input = sdsLineEdit.text()
+    sds_input = sds_input.strip()
 
     if not inDir or not roi_input or not output_file:
         QMessageBox.warning(None, "Input Error", "Please provide all required inputs.")
@@ -971,7 +974,7 @@ def process_files(inDirLineEdit, roiLineEdit, outputFileLineEdit, sdsLineEdit, a
     
     
     csv(exclusion_algo)
-    QMessageBox.information(None, "Process Completed", f"Merged HDF5 file created at: {output_hdf5_file}")
+    QMessageBox.information(None, "Process Completed", "output_csv and out.h5 generated")
 
 def merge_data(files, beams=None, sds=None):
     merged_data = {
@@ -1771,7 +1774,7 @@ def filtre(csvLineEdit):
     num_rows, num_cols = merged_df.shape
 
     processing_message.close()
-    QMessageBox.information(None, "Process Completed", f"File filtered \n Number of data filtered : {lenght}\nNumber of rows : {num_rows}\nNumber of columns : {num_cols}")
+    QMessageBox.information(None, "Process Completed", f"File filtered \n Number of data filtered : {lenght}\nFinal number of rows : {num_rows}\nFinal number of columns : {num_cols}")
 
 
 def split_csv_on_algo(csvLineEdit):
