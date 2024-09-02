@@ -1558,15 +1558,124 @@ def merge_csv_on_id(output_dir):
     with h5py.File(h5_file_path, 'r+') as h5file:
         if 'geolocation' in h5file['df']:
             geolocation_group = h5file['df']['geolocation']
-            if 'df' in h5file:
-                df_group = h5file['df']
-            for dataset_name in geolocation_group:
-                dataset_data = geolocation_group[dataset_name][:]
-                # Créer un nouveau dataset dans le groupe 'df' avec les mêmes données
-                if dataset_name not in df_group:
-                    df_group.create_dataset(dataset_name, data=dataset_data)
+        if 'land_cover_data' in h5file['df']:
+            land_group = h5file['df']['land_cover_data']
+        if 'rx_processing' in h5file['df']:
+            rx_group = h5file['df']['rx_processing']
+        if 'rx_processing' in h5file['df']:
+            rx_group = h5file['df']['rx_processing']
+        if 'rx_processing_a1' in h5file['df']:
+            rx1 = h5file['df']['rx_processing_a1']     
+        if 'rx_processing_a2' in h5file['df']:
+            rx2 = h5file['df']['rx_processing_a2']
+        if 'rx_processing_a3' in h5file['df']:
+            rx3 = h5file['df']['rx_processing_a3']
+        if 'rx_processing_a4' in h5file['df']:
+            rx4 = h5file['df']['rx_processing_a4']     
+        if 'rx_processing_a5' in h5file['df']:
+            rx5 = h5file['df']['rx_processing_a5']
+        if 'rx_processing_a6' in h5file['df']:
+            rx6 = h5file['df']['rx_processing_a6']       
+        if 'rx_1gaussfit' in h5file['df']:
+            rxg = h5file['df']['rx_1gaussfit']
+        if 'rx_assess' in h5file['df']:
+            rxa = h5file['df']['rx_assess'] 
+            
+        if 'df' in h5file:
+            df_group = h5file['df']
+            if 'geolocation' in h5file['df']:
+                for dataset_name in geolocation_group:
+                    dataset_data = geolocation_group[dataset_name][:]
+                    # Créer un nouveau dataset dans le groupe 'df' avec les mêmes données
+                    if dataset_name not in df_group:
+                        df_group.create_dataset(dataset_name, data=dataset_data)
+                del h5file['df']['geolocation'] 
+            if 'land_cover_data' in h5file['df']:            
+                for dataset_name in land_group:
+                    dataset_data = land_group[dataset_name][:]
+                    # Créer un nouveau dataset dans le groupe 'df' avec les mêmes données
+                    if dataset_name not in df_group:
+                        df_group.create_dataset(dataset_name, data=dataset_data)
+                del h5file['df']['land_cover_data']
+                
+            if 'rx_processing' in h5file['df']:            
+                for dataset_name in rx_group:
+                    dataset_data = rx_group[dataset_name][:]
+                    # Créer un nouveau dataset dans le groupe 'df' avec les mêmes données
+                    if dataset_name not in df_group:
+                        df_group.create_dataset(dataset_name, data=dataset_data)
+                del h5file['df']['rx_processing']
+                
+            if 'rx_processing_a1' in h5file['df']:
+                for dataset_name in rx1:
+                    dataset_data = rx1[dataset_name][:]
+                    # Créer un nouveau dataset dans le groupe 'df' avec les mêmes données
+                    if dataset_name not in df_group:
+                        df_group.create_dataset(dataset_name, data=dataset_data)
+                del h5file['df']['rx_processing_a1'] 
+                
+            if 'rx_processing_a2' in h5file['df']:
+                for dataset_name in rx2:
+                    dataset_data = rx2[dataset_name][:]
+                    # Créer un nouveau dataset dans le groupe 'df' avec les mêmes données
+                    if dataset_name not in df_group:
+                        df_group.create_dataset(dataset_name, data=dataset_data)
+                del h5file['df']['rx_processing_a2'] 
+                
+            if 'rx_processing_a3' in h5file['df']:
+                for dataset_name in rx3:
+                    dataset_data = rx3[dataset_name][:]
+                    # Créer un nouveau dataset dans le groupe 'df' avec les mêmes données
+                    if dataset_name not in df_group:
+                        df_group.create_dataset(dataset_name, data=dataset_data)
+                del h5file['df']['rx_processing_a3'] 
+                
+            if 'rx_processing_a4' in h5file['df']:
+                for dataset_name in rx4:
+                    dataset_data = rx4[dataset_name][:]
+                    # Créer un nouveau dataset dans le groupe 'df' avec les mêmes données
+                    if dataset_name not in df_group:
+                        df_group.create_dataset(dataset_name, data=dataset_data)
+                del h5file['df']['rx_processing_a4'] 
+                 
+            if 'rx_processing_a5' in h5file['df']:
+                for dataset_name in rx5:
+                    dataset_data = rx5[dataset_name][:]
+                    # Créer un nouveau dataset dans le groupe 'df' avec les mêmes données
+                    if dataset_name not in df_group:
+                        df_group.create_dataset(dataset_name, data=dataset_data)
+                del h5file['df']['rx_processing_a5']
+                
+            if 'rx_processing_a6' in h5file['df']:
+                for dataset_name in rx6:
+                    dataset_data = rx6[dataset_name][:]
+                    # Créer un nouveau dataset dans le groupe 'df' avec les mêmes données
+                    if dataset_name not in df_group:
+                        df_group.create_dataset(dataset_name, data=dataset_data) 
+                del h5file['df']['rx_processing_a6']
+                
+            if 'rx_1gaussfit' in h5file['df']:
+                for dataset_name in rxg:
+                    dataset_data = rxg[dataset_name][:]
+                    # Créer un nouveau dataset dans le groupe 'df' avec les mêmes données
+                    if dataset_name not in df_group:
+                        df_group.create_dataset(dataset_name, data=dataset_data) 
+                del h5file['df']['rx_1gaussfit']
+                
+            if 'rx_assess' in h5file['df']:
+                for dataset_name in rxa:
+                    dataset_data = rxa[dataset_name][:]
+                    # Créer un nouveau dataset dans le groupe 'df' avec les mêmes données
+                    if dataset_name not in df_group:
+                        df_group.create_dataset(dataset_name, data=dataset_data) 
+                del h5file['df']['rx_assess']
                     
-            del h5file['df']['geolocation']        
+               
+              
+            
+            
+            
+            
         rx = np.array(h5file['df']['search_end'])
         TAILLE = len(rx) 
         dataset_name = 'df/IDS'
