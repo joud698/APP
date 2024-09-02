@@ -10,5 +10,5 @@
 |                        PLEASE DON'T MOVE THE .EXE FILE. INSTEAD, CREATE A SHORTCUT !!!                  | 
 |                                                                                                         | 
 |                                                                                                         |
-|                   	       You can use 'test' folder to test the APP's features                         |
+|                   	       You can use 'test' folder to test the APP's features                       |
 -----------------------------------------------------------------------------------------------------------
