@@ -133,14 +133,14 @@ def create_map_widget(i, parent=None):
                     fill_opacity=0.6
                 ).add_to(my_map)
                 
-    folium.TileLayer('esriworldimagery').add_to(my_map)
+
     folium.TileLayer('openstreetmap').add_to(my_map)
     folium.TileLayer('cartodbpositron').add_to(my_map)
     folium.TileLayer('cartodbdark_matter').add_to(my_map)
-    # folium.TileLayer(
-    # tiles='https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    # attr='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
-    # name='esriworldimagery').add_to(my_map)
+    folium.TileLayer(
+    tiles='https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    attr='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+    name='esriworldimagery').add_to(my_map)
     folium.LayerControl().add_to(my_map)
 
     popup_html = f'''
@@ -478,4 +478,3 @@ def MAIN() :
         map_window = QMainWindow()
         setup_ui(map_window)
     map_window.show()
-
