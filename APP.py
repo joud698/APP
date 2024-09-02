@@ -1553,13 +1553,24 @@ def merge_csv_on_id(output_dir):
     #FILTER .h5
     h5_file_path = os.path.join(parentDir, "out.h5")
     with h5py.File(h5_file_path, 'r+') as h5file:
+        if 'geolocation' in h5file['df']:
+            geolocation_group = h5file['df']['geolocation']
+            if 'df' in h5file:
+                df_group = h5file['df']
+            for dataset_name in geolocation_group:
+                dataset_data = geolocation_group[dataset_name][:]
+                # Créer un nouveau dataset dans le groupe 'df' avec les mêmes données
+                if dataset_name not in df_group:
+                    df_group.create_dataset(dataset_name, data=dataset_data)
+                    
+            del h5file['df']['geolocation']        
         rx = np.array(h5file['df']['search_end'])
         TAILLE = len(rx) 
         dataset_name = 'df/IDS'
         data_ids = h5file[dataset_name][:]
         for nom_dataset in h5file['df']:
             dataset = h5file['df'][nom_dataset]
-            data = dataset[()]
+            data = dataset[:] #!!!BUG
             
             # Créer un nouveau dataset avec la forme modifiée
             del h5file['df'][nom_dataset]  # Supprimer l'ancien dataset
